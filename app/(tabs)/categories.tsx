@@ -1,84 +1,83 @@
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image } from 'react-native';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 const categories = [
   {
-    id: 1,
+    id: '1',
     name: 'Su Tesisatı',
-    icon: 'water' as const,
-    subcategories: ['Musluklar', 'Borular', 'Vanalar', 'Pompalar']
+    icon: 'water-outline',
+    image: 'https://www.sutesisatfirmasi.com/wp-content/uploads/2023/05/Ucuz-Tesisatci.png',
   },
   {
-    id: 2,
+    id: '2',
     name: 'Elektrik',
-    icon: 'flash' as const,
-    subcategories: ['Kablolar', 'Anahtarlar', 'Prizler', 'Aydınlatma']
+    icon: 'flash-outline',
+    image: 'https://5.imimg.com/data5/SELLER/Default/2023/6/320571543/VB/DG/PK/21448494/residential-electrical-work-services.jpg',
   },
   {
-    id: 3,
-    name: 'Hırdavat',
-    icon: 'hammer' as const,
-    subcategories: ['El Aletleri', 'Vidalar', 'Çiviler', 'Tornavidalar']
-  },
-  {
-    id: 4,
+    id: '3',
     name: 'Isıtma',
-    icon: 'flame' as const,
-    subcategories: ['Kombiler', 'Radyatörler', 'Petekler', 'Termostatlar']
-  }
+    icon: 'thermometer-outline',
+    image: 'https://productimages.hepsiburada.net/s/42/550/10728905646130.jpg',
+  },
+  {
+    id: '4',
+    name: 'Hırdavat',
+    icon: 'hammer-outline',
+    image: 'https://productimages.hepsiburada.net/s/37/550/10538725515314.jpg',
+  },
 ];
 
 export default function CategoriesScreen() {
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.content}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Kategoriler</Text>
+      </View>
+
+      <View style={styles.categoriesGrid}>
         {categories.map((category) => (
-          <TouchableOpacity key={category.id} style={styles.categoryCard}>
-            <View style={styles.categoryHeader}>
-              <View style={styles.categoryIcon}>
-                <Ionicons name={category.icon} size={24} color="#007AFF" />
-              </View>
-              <Text style={styles.categoryName}>{category.name}</Text>
-              <Ionicons name="chevron-forward" size={24} color="#666" />
-            </View>
-            
-            <View style={styles.subcategories}>
-              {category.subcategories.map((subcategory, index) => (
-                <TouchableOpacity key={index} style={styles.subcategoryItem}>
-                  <Text style={styles.subcategoryText}>{subcategory}</Text>
-                </TouchableOpacity>
-              ))}
+          <TouchableOpacity
+            key={category.id}
+            style={styles.categoryCard}
+            onPress={() => router.push(`/products?category=${encodeURIComponent(category.name)}`)}
+          >
+            <Image source={{ uri: category.image }} style={styles.categoryImage} />
+            <View style={styles.categoryInfo}>
+              <Ionicons name={category.icon as any} size={24} color="#2980b9" />
+              <Text style={styles.categoryTitle}>{category.name}</Text>
             </View>
           </TouchableOpacity>
         ))}
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
   header: {
     padding: 16,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e9ecef',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
+    color: '#2c3e50',
   },
-  content: {
-    flex: 1,
+  categoriesGrid: {
     padding: 16,
   },
   categoryCard: {
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 16,
-    padding: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -87,41 +86,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    width: '100%',
   },
-  categoryHeader: {
+  categoryImage: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    resizeMode: 'cover',
+  },
+  categoryInfo: {
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  categoryName: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  subcategories: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-  },
-  subcategoryItem: {
-    backgroundColor: '#f8f8f8',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  subcategoryText: {
-    fontSize: 14,
-    color: '#666',
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 12,
+    color: '#2c3e50',
   },
 }); 

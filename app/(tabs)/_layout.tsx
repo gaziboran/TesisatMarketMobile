@@ -29,28 +29,46 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Ana Sayfa',
-          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="categories"
         options={{
           title: 'Kategoriler',
-          tabBarIcon: ({ color }) => <Ionicons name="grid" size={24} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="products"
+        options={{
+          title: 'Ürünler',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cube-outline" size={size} color={color} />
+          ),
+          href: null,
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
           title: 'Sepet',
-          tabBarIcon: ({ color }) => <Ionicons name="cart" size={24} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cart-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profil',
-          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
