@@ -1,16 +1,17 @@
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 
-export default function ProfileScreen() {
+export default function RegisterScreen() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter();
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleLogin = () => {
-    // Giriş işlemleri burada yapılacak
-    console.log('Giriş yapılıyor:', email);
+  const handleRegister = () => {
+    // Kayıt işlemleri burada yapılacak
+    console.log('Kayıt yapılıyor:', { name, email });
   };
 
   return (
@@ -19,12 +20,22 @@ export default function ProfileScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <View style={styles.logoContainer}>
+        <View style={styles.headerContainer}>
           <Text style={styles.welcomeText}>Tesisat Market</Text>
-          <Text style={styles.welcomeSubText}>Giriş Yap</Text>
+          <Text style={styles.welcomeSubText}>Kayıt Ol</Text>
         </View>
 
         <View style={styles.formContainer}>
+          <View style={styles.inputContainer}>
+            <Ionicons name="person-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Ad Soyad"
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
+
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
             <TextInput
@@ -48,21 +59,25 @@ export default function ProfileScreen() {
             />
           </View>
 
-          <TouchableOpacity 
-            style={styles.forgotPassword}
-            onPress={() => router.push('/forgot-password')}
-          >
-            <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Şifre Tekrar"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+            <Text style={styles.registerButtonText}>Kayıt Ol</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Giriş Yap</Text>
-          </TouchableOpacity>
-
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Hesabınız yok mu? </Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text style={styles.registerLink}>Kayıt Ol</Text>
+          <View style={styles.loginContainer}>
+            <Text style={styles.loginText}>Zaten hesabınız var mı? </Text>
+            <TouchableOpacity onPress={() => router.push('/profile')}>
+              <Text style={styles.loginLink}>Giriş Yap</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -81,7 +96,7 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
   },
-  logoContainer: {
+  headerContainer: {
     alignItems: 'center',
     marginBottom: 40,
   },
@@ -119,15 +134,7 @@ const styles = StyleSheet.create({
     height: '100%',
     fontSize: 16,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
-  },
-  forgotPasswordText: {
-    color: '#FF6B00',
-    fontSize: 14,
-  },
-  loginButton: {
+  registerButton: {
     backgroundColor: '#FF6B00',
     borderRadius: 10,
     height: 50,
@@ -135,21 +142,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  loginButtonText: {
+  registerButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  registerContainer: {
+  loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  registerText: {
+  loginText: {
     color: '#666',
     fontSize: 14,
   },
-  registerLink: {
+  loginLink: {
     color: '#FF6B00',
     fontSize: 14,
     fontWeight: 'bold',

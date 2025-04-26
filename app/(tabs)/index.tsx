@@ -1,6 +1,7 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image, Animated, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useEffect, useRef } from 'react';
 
 interface Category {
   id: string;
@@ -73,10 +74,45 @@ const featuredProducts: Product[] = [
 ];
 
 export default function HomeScreen() {
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const bannerScale = scrollY.interpolate({
+    inputRange: [-200, 0, 200],
+    outputRange: [1.2, 1, 0.8],
+  });
+
+  const bannerOpacity = scrollY.interpolate({
+    inputRange: [0, 200],
+    outputRange: [1, 0.5],
+  });
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <Animated.ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      onScroll={Animated.event(
+        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+        { useNativeDriver: true }
+      )}
+      scrollEventThrottle={16}
+    >
       {/* Banner */}
-      <View style={styles.bannerContainer}>
+      <Animated.View style={[
+        styles.bannerContainer,
+        {
+          transform: [{ scale: bannerScale }],
+          opacity: bannerOpacity,
+        }
+      ]}>
         <Image
           source={{ uri: 'https://www.sutesisatfirmasi.com/wp-content/uploads/2023/05/Ucuz-Tesisatci.png' }}
           style={styles.bannerImage}
@@ -86,59 +122,90 @@ export default function HomeScreen() {
           <Text style={styles.bannerTitle}>Tesisat Market'e Hoş Geldiniz</Text>
           <Text style={styles.bannerSubtitle}>Kaliteli Ürünler, Uygun Fiyatlar</Text>
         </View>
-      </View>
+      </Animated.View>
 
       {/* Kategoriler */}
-      <View style={styles.section}>
+      <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
         <Text style={styles.sectionTitle}>Popüler Kategoriler</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
-          {categories.map((category) => (
-            <TouchableOpacity
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.categoriesScroll}
+          contentContainerStyle={styles.categoriesContainer}
+        >
+          {categories.map((category, index) => (
+            <Animated.View
               key={category.id}
-              style={styles.categoryCard}
-              onPress={() => router.push(`/products?category=${encodeURIComponent(category.name)}`)}
+              style={[
+                styles.categoryCard,
+                {
+                  transform: [{
+                    translateX: fadeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [50 * (index + 1), 0],
+                    })
+                  }]
+                }
+              ]}
             >
-              <Image source={{ uri: category.image }} style={styles.categoryImage} />
-              <View style={styles.categoryInfo}>
-                <Ionicons name={category.icon as any} size={24} color="#2980b9" />
-                <Text style={styles.categoryText}>{category.name}</Text>
-              </View>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push(`/products?category=${encodeURIComponent(category.name)}`)}
+              >
+                <Image source={{ uri: category.image }} style={styles.categoryImage} />
+                <View style={styles.categoryInfo}>
+                  <Ionicons name={category.icon as any} size={24} color="#FF6B00" />
+                  <Text style={styles.categoryText}>{category.name}</Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
           ))}
         </ScrollView>
-      </View>
+      </Animated.View>
 
       {/* Ürünler */}
-      <View style={styles.section}>
+      <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
         <Text style={styles.sectionTitle}>Öne Çıkan Ürünler</Text>
         <View style={styles.productsGrid}>
-          {featuredProducts.map((product) => (
-            <TouchableOpacity
+          {featuredProducts.map((product, index) => (
+            <Animated.View
               key={product.id}
-              style={styles.productCard}
-              onPress={() => router.push({
-                pathname: '/product-detail',
-                params: {
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  image: product.image,
-                  description: product.description,
-                  category: product.category,
-                },
-              })}
+              style={[
+                styles.productCard,
+                {
+                  transform: [{
+                    translateY: fadeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [50 * (index + 1), 0],
+                    })
+                  }]
+                }
+              ]}
             >
-              <Image source={{ uri: product.image }} style={styles.productImage} />
-              <View style={styles.productInfo}>
-                <Text style={styles.productTitle}>{product.name}</Text>
-                <Text style={styles.productDescription}>{product.description}</Text>
-                <Text style={styles.productPrice}>₺{product.price}</Text>
-              </View>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push({
+                  pathname: '/product-detail',
+                  params: {
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.image,
+                    description: product.description,
+                    category: product.category,
+                  },
+                })}
+              >
+                <Image source={{ uri: product.image }} style={styles.productImage} />
+                <View style={styles.productInfo}>
+                  <Text style={styles.productTitle}>{product.name}</Text>
+                  <Text style={styles.productDescription}>{product.description}</Text>
+                  <Text style={styles.productPrice}>₺{product.price}</Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
           ))}
         </View>
-      </View>
-    </ScrollView>
+      </Animated.View>
+    </Animated.ScrollView>
   );
 }
 
@@ -150,6 +217,7 @@ const styles = StyleSheet.create({
   bannerContainer: {
     height: 200,
     position: 'relative',
+    marginBottom: 20,
   },
   bannerImage: {
     width: '100%',
@@ -160,7 +228,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(255, 107, 0, 0.8)',
     padding: 16,
   },
   bannerTitle: {
@@ -176,30 +244,37 @@ const styles = StyleSheet.create({
   },
   section: {
     padding: 16,
+    marginTop: 20,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
     color: '#2c3e50',
+    marginTop: 30,
   },
   categoriesScroll: {
     marginHorizontal: -16,
     paddingHorizontal: 16,
+    marginTop: 0,
+  },
+  categoriesContainer: {
+    paddingHorizontal: 8,
   },
   categoryCard: {
     width: 200,
     backgroundColor: '#fff',
     borderRadius: 12,
     marginRight: 16,
-    shadowColor: '#000',
+    shadowColor: '#FF6B00',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 5,
+    transform: [{ scale: 1 }],
   },
   categoryImage: {
     width: '100%',
@@ -226,14 +301,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#FF6B00',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 5,
+    transform: [{ scale: 1 }],
   },
   productImage: {
     width: '100%',
@@ -259,6 +335,6 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2980b9',
+    color: '#FF6B00',
   },
 });

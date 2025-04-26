@@ -1,16 +1,14 @@
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 
-export default function ProfileScreen() {
+export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const router = useRouter();
 
-  const handleLogin = () => {
-    // Giriş işlemleri burada yapılacak
-    console.log('Giriş yapılıyor:', email);
+  const handleResetPassword = () => {
+    // Şifre sıfırlama işlemleri burada yapılacak
+    console.log('Şifre sıfırlama isteği gönderiliyor:', email);
   };
 
   return (
@@ -19,12 +17,16 @@ export default function ProfileScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <View style={styles.logoContainer}>
+        <View style={styles.headerContainer}>
           <Text style={styles.welcomeText}>Tesisat Market</Text>
-          <Text style={styles.welcomeSubText}>Giriş Yap</Text>
+          <Text style={styles.welcomeSubText}>Şifremi Unuttum</Text>
         </View>
 
         <View style={styles.formContainer}>
+          <Text style={styles.descriptionText}>
+            E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.
+          </Text>
+
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
             <TextInput
@@ -37,34 +39,17 @@ export default function ProfileScreen() {
             />
           </View>
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Şifre"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
+          <TouchableOpacity style={styles.resetButton} onPress={handleResetPassword}>
+            <Text style={styles.resetButtonText}>Şifremi Sıfırla</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.forgotPassword}
-            onPress={() => router.push('/forgot-password')}
+            style={styles.backButton}
+            onPress={() => router.push('/profile')}
           >
-            <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
+            <Ionicons name="arrow-back" size={20} color="#FF6B00" />
+            <Text style={styles.backButtonText}>Giriş Sayfasına Dön</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Giriş Yap</Text>
-          </TouchableOpacity>
-
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Hesabınız yok mu? </Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text style={styles.registerLink}>Kayıt Ol</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -81,7 +66,7 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
   },
-  logoContainer: {
+  headerContainer: {
     alignItems: 'center',
     marginBottom: 40,
   },
@@ -100,12 +85,18 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
   },
+  descriptionText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
     borderRadius: 10,
-    marginBottom: 15,
+    marginBottom: 20,
     paddingHorizontal: 15,
     height: 50,
     borderWidth: 1,
@@ -119,15 +110,7 @@ const styles = StyleSheet.create({
     height: '100%',
     fontSize: 16,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
-  },
-  forgotPasswordText: {
-    color: '#FF6B00',
-    fontSize: 14,
-  },
-  loginButton: {
+  resetButton: {
     backgroundColor: '#FF6B00',
     borderRadius: 10,
     height: 50,
@@ -135,23 +118,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  loginButtonText: {
+  resetButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  registerContainer: {
+  backButton: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  registerText: {
-    color: '#666',
-    fontSize: 14,
-  },
-  registerLink: {
+  backButtonText: {
     color: '#FF6B00',
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 16,
+    marginLeft: 8,
   },
 }); 
