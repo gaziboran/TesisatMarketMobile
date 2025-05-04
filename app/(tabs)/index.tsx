@@ -149,14 +149,14 @@ export default function HomeScreen() {
               ]}
             >
               <TouchableOpacity
-                onPress={() => router.push(`/products?category=${encodeURIComponent(category.name)}`)}
-              >
-                <Image source={{ uri: category.image }} style={styles.categoryImage} />
-                <View style={styles.categoryInfo}>
+              onPress={() => router.push(`/products?category=${encodeURIComponent(category.name)}`)}
+            >
+              <Image source={{ uri: category.image }} style={styles.categoryImage} />
+              <View style={styles.categoryInfo}>
                   <Ionicons name={category.icon as any} size={24} color="#FF6B00" />
-                  <Text style={styles.categoryText}>{category.name}</Text>
-                </View>
-              </TouchableOpacity>
+                <Text style={styles.categoryText}>{category.name}</Text>
+              </View>
+            </TouchableOpacity>
             </Animated.View>
           ))}
         </ScrollView>
@@ -182,25 +182,25 @@ export default function HomeScreen() {
               ]}
             >
               <TouchableOpacity
-                onPress={() => router.push({
-                  pathname: '/product-detail',
-                  params: {
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    image: product.image,
-                    description: product.description,
-                    category: product.category,
-                  },
-                })}
-              >
-                <Image source={{ uri: product.image }} style={styles.productImage} />
-                <View style={styles.productInfo}>
-                  <Text style={styles.productTitle}>{product.name}</Text>
-                  <Text style={styles.productDescription}>{product.description}</Text>
-                  <Text style={styles.productPrice}>₺{product.price}</Text>
-                </View>
-              </TouchableOpacity>
+              onPress={() => router.push({
+                pathname: '/product-detail',
+                params: {
+                  id: product.id,
+                  name: product.name,
+                  price: product.price,
+                  image: product.image,
+                  description: product.description,
+                  category: product.category,
+                },
+              })}
+            >
+              <Image source={{ uri: product.image }} style={styles.productImage} />
+              <View style={styles.productInfo}>
+                <Text style={styles.productTitle}>{product.name}</Text>
+                <Text style={styles.productDescription}>{product.description}</Text>
+                <Text style={styles.productPrice}>₺{product.price}</Text>
+              </View>
+            </TouchableOpacity>
             </Animated.View>
           ))}
         </View>

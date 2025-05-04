@@ -8,9 +8,27 @@ export default function ProfileScreen() {
   const [password, setPassword] = useState('');
   const router = useRouter();
 
-  const handleLogin = () => {
-    // Giriş işlemleri burada yapılacak
-    console.log('Giriş yapılıyor:', email);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      alert('Lütfen tüm alanları doldurun!');
+      return;
+    }
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password })
+      });
+      const data = await response.json();
+      if (data.token && data.user) {
+        alert(`Hoşgeldiniz ${data.user.fullName}`);
+        router.push('/'); // Anasayfaya yönlendir
+      } else {
+        alert(data.message || 'Hatalı bilgi!');
+      }
+    } catch (err) {
+      alert('Sunucuya ulaşılamıyor!');
+    }
   };
 
   return (

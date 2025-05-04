@@ -6,12 +6,53 @@ import { router } from 'expo-router';
 export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleRegister = () => {
-    // Kayıt işlemleri burada yapılacak
-    console.log('Kayıt yapılıyor:', { name, email });
+  const emailRegex = /^[\w-\.]+@(gmail\.com|hotmail\.com|outlook\.com)$/i;
+  const phoneRegex = /^(05\d{9}|5\d{9})$/;
+
+  const handleRegister = async () => {
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      alert('Lütfen tüm alanları doldurun!');
+      return;
+    }
+    if (!emailRegex.test(email)) {
+      alert('Lütfen geçerli bir e-posta adresi girin! (gmail, hotmail, outlook)');
+      return;
+    }
+    if (!phoneRegex.test(phone)) {
+      alert('Lütfen geçerli bir telefon numarası girin! (05XXXXXXXXX veya 5XXXXXXXXX)');
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert('Şifreler uyuşmuyor!');
+      return;
+    }
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: name,
+          password,
+          phone,
+          email,
+          fullName: name,
+          address: "-"
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Başarıyla kayıt oldunuz!');
+        router.push('/profile');
+      } else {
+        alert(data.message || 'Kayıt başarısız!');
+      }
+    } catch (err) {
+      alert('Sunucuya ulaşılamıyor!');
+    }
   };
 
   return (
@@ -45,6 +86,17 @@ export default function RegisterScreen() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="call-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Telefon Numarası"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
             />
           </View>
 
