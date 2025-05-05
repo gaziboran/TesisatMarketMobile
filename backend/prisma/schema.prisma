@@ -22,16 +22,29 @@ model User {
   roleId    Int      @default(1)
 }
 
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  icon        String?
+  image       String?
+  slug        String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   name        String
   description String?
   price       Float
-  stock       Int      @default(0)
+  stock       Int       @default(0)
   image       String?
-  category    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   orderItems  OrderItem[]
   cartItems   CartItem[]
 }

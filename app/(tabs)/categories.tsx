@@ -1,57 +1,80 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Image, FlatList, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
 
-const categories = [
-  {
-    id: '1',
-    name: 'Su Tesisatı',
-    icon: 'water-outline',
-    image: 'https://www.sutesisatfirmasi.com/wp-content/uploads/2023/05/Ucuz-Tesisatci.png',
-  },
-  {
-    id: '2',
-    name: 'Elektrik',
-    icon: 'flash-outline',
-    image: 'https://5.imimg.com/data5/SELLER/Default/2023/6/320571543/VB/DG/PK/21448494/residential-electrical-work-services.jpg',
-  },
-  {
-    id: '3',
-    name: 'Isıtma',
-    icon: 'thermometer-outline',
-    image: 'https://www.deltamekanik.com.tr/images/isitma-sistemleri.jpg',
-  },
-  {
-    id: '4',
-    name: 'Hırdavat',
-    icon: 'hammer-outline',
-    image: 'https://ideacdn.net/idea/hi/39/myassets/blogs/hirdavat.jpeg?revision=1677512276',
-  },
-];
+interface Category {
+  id: number;
+  name: string;
+  icon?: string;
+  image?: string;
+  description?: string;
+  slug?: string;
+}
 
 export default function CategoriesScreen() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch('http://localhost:3001/api/categories');
+        if (!response.ok) throw new Error('Kategoriler alınamadı');
+        const data = await response.json();
+        setCategories(data);
+      } catch (err) {
+        setError('Kategoriler alınamadı');
+        console.error('Kategori çekme hatası:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const renderCategory = ({ item }: { item: Category }) => (
+    <TouchableOpacity
+      style={styles.categoryCard}
+      onPress={() => router.push(`/products?category=${encodeURIComponent(item.name)}`)}
+    >
+      <Image source={{ uri: item.image || 'https://via.placeholder.com/100x100?text=Kategori' }} style={styles.categoryImage} />
+      <View style={styles.categoryInfo}>
+        {item.icon ? (
+          <Ionicons name={item.icon as any} size={24} color="#2980b9" />
+        ) : null}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.categoryTitle}>{item.name}</Text>
+          {item.description ? (
+            <Text style={styles.categoryDesc}>{item.description}</Text>
+          ) : null}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Kategoriler</Text>
       </View>
-
-      <View style={styles.categoriesGrid}>
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category.id}
-            style={styles.categoryCard}
-            onPress={() => router.push(`/products?category=${encodeURIComponent(category.name)}`)}
-          >
-            <Image source={{ uri: category.image }} style={styles.categoryImage} />
-            <View style={styles.categoryInfo}>
-              <Ionicons name={category.icon as any} size={24} color="#2980b9" />
-              <Text style={styles.categoryTitle}>{category.name}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+      {loading ? (
+        <ActivityIndicator size="large" color="#FF6B00" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <Text style={{ color: 'red', textAlign: 'center', marginTop: 40 }}>{error}</Text>
+      ) : (
+        <FlatList
+          data={categories}
+          renderItem={renderCategory}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.categoriesGrid}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </View>
   );
 }
 
@@ -105,5 +128,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 12,
     color: '#2c3e50',
+  },
+  categoryDesc: {
+    fontSize: 13,
+    color: '#7f8c8d',
+    marginLeft: 12,
+    marginTop: 2,
   },
 }); 
