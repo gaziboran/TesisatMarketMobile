@@ -2,6 +2,7 @@ import { StyleSheet, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingVi
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -45,8 +46,22 @@ export default function RegisterScreen() {
       });
       const data = await response.json();
       if (data.success) {
-        alert('Başarıyla kayıt oldunuz!');
-        router.push('/profile');
+        // Kayıt başarılı, otomatik giriş yap
+        const loginResponse = await fetch('http://localhost:3001/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: email, password })
+        });
+        const loginData = await loginResponse.json();
+        if (loginData.token && loginData.user) {
+          await AsyncStorage.setItem('user', JSON.stringify(loginData.user));
+          await AsyncStorage.setItem('token', loginData.token);
+          alert(`Hoşgeldiniz ${loginData.user.fullName}`);
+          router.push('/');
+        } else {
+          alert('Kayıt başarılı! Lütfen giriş yapın.');
+          router.push('/profile');
+        }
       } else {
         alert(data.message || 'Kayıt başarısız!');
       }

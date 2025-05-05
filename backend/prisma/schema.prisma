@@ -19,6 +19,7 @@ model User {
   updatedAt DateTime @updatedAt
   orders    Order[]
   cart      Cart?
+  roleId    Int      @default(1)
 }
 
 model Product {

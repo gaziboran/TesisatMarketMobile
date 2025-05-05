@@ -36,13 +36,13 @@ const categories: Category[] = [
     id: '3',
     name: 'Isıtma',
     icon: 'thermometer-outline',
-    image: 'https://productimages.hepsiburada.net/s/42/550/10728905646130.jpg',
+    image: 'https://www.deltamekanik.com.tr/images/isitma-sistemleri.jpg',
   },
   {
     id: '4',
     name: 'Hırdavat',
     icon: 'hammer-outline',
-    image: 'https://productimages.hepsiburada.net/s/37/550/10538725515314.jpg',
+    image: 'https://ideacdn.net/idea/hi/39/myassets/blogs/hirdavat.jpeg?revision=1677512276',
   },
 ];
 

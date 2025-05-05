@@ -6,9 +6,28 @@ import { router } from 'expo-router';
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
 
-  const handleResetPassword = () => {
-    // Şifre sıfırlama işlemleri burada yapılacak
-    console.log('Şifre sıfırlama isteği gönderiliyor:', email);
+  const handleResetPassword = async () => {
+    if (!email) {
+      alert('Lütfen e-posta adresinizi girin!');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi!');
+        router.push('/profile');
+      } else {
+        alert(data.message || 'Şifre sıfırlama işlemi başarısız!');
+      }
+    } catch (err) {
+      alert('Sunucuya ulaşılamıyor!');
+    }
   };
 
   return (

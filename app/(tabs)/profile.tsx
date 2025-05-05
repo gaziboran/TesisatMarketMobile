@@ -1,12 +1,43 @@
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, Image, KeyboardAvoidingView, Platform, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  phone: string;
+  fullName: string;
+  address: string;
+}
 
 export default function ProfileScreen() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
+  const [newAddress, setNewAddress] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+    } catch (error) {
+      console.error('Kullanıcı bilgisi alınamadı:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -21,8 +52,11 @@ export default function ProfileScreen() {
       });
       const data = await response.json();
       if (data.token && data.user) {
+        await AsyncStorage.setItem('user', JSON.stringify(data.user));
+        await AsyncStorage.setItem('token', data.token);
+        setUser(data.user);
         alert(`Hoşgeldiniz ${data.user.fullName}`);
-        router.push('/'); // Anasayfaya yönlendir
+        router.push('/');
       } else {
         alert(data.message || 'Hatalı bilgi!');
       }
@@ -31,61 +65,207 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('token');
+      setUser(null);
+      router.push('/');
+    } catch (error) {
+      console.error('Çıkış yapılırken hata oluştu:', error);
+    }
+  };
+
+  const handleUpdateAddress = async () => {
+    if (!newAddress.trim()) {
+      alert('Adres alanı boş bırakılamaz');
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        alert('Oturum süreniz dolmuş, lütfen tekrar giriş yapın!');
+        return;
+      }
+
+      const response = await fetch('http://localhost:3001/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          address: newAddress
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.user) {
+        await AsyncStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
+        setIsAddressModalVisible(false);
+        alert('Adres başarıyla güncellendi');
+      } else {
+        throw new Error('Kullanıcı bilgisi alınamadı');
+      }
+    } catch (error) {
+      console.error('Adres güncelleme hatası:', error);
+      alert('Adres güncellenemedi, lütfen tekrar deneyin');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text>Yükleniyor...</Text>
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <View style={styles.content}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.welcomeText}>Tesisat Market</Text>
+            <Text style={styles.welcomeSubText}>Giriş Yap</Text>
+          </View>
+
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="E-posta"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Şifre"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <TouchableOpacity 
+              style={styles.forgotPassword}
+              onPress={() => router.push('/forgot-password')}
+            >
+              <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>Giriş Yap</Text>
+            </TouchableOpacity>
+
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>Hesabınız yok mu? </Text>
+              <TouchableOpacity onPress={() => router.push('/register')}>
+                <Text style={styles.registerLink}>Kayıt Ol</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
+
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.welcomeText}>Tesisat Market</Text>
-          <Text style={styles.welcomeSubText}>Giriş Yap</Text>
+    <ScrollView style={styles.container}>
+      <View style={styles.profileContent}>
+        <View style={styles.profileHeader}>
+          <Ionicons name="person-circle-outline" size={80} color="#FF6B00" />
+          <Text style={styles.userName}>{user.fullName}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
         </View>
 
-        <View style={styles.formContainer}>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="E-posta"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+        <View style={styles.infoSection}>
+          <Text style={styles.sectionTitle}>Kişisel Bilgiler</Text>
+          <View style={styles.infoItem}>
+            <Ionicons name="call-outline" size={24} color="#FF6B00" />
+            <Text style={styles.infoText}>{user.phone}</Text>
           </View>
-
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={24} color="#FF6B00" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Şifre"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
-
-          <TouchableOpacity 
-            style={styles.forgotPassword}
-            onPress={() => router.push('/forgot-password')}
-          >
-            <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Giriş Yap</Text>
-          </TouchableOpacity>
-
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Hesabınız yok mu? </Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text style={styles.registerLink}>Kayıt Ol</Text>
+          <View style={styles.infoItem}>
+            <Ionicons name="location-outline" size={24} color="#FF6B00" />
+            <Text style={styles.infoText}>{user.address || 'Adres bilgisi girilmemiş'}</Text>
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => {
+                setNewAddress(user.address || '');
+                setIsAddressModalVisible(true);
+              }}
+            >
+              <Ionicons name="create-outline" size={20} color="#FF6B00" />
             </TouchableOpacity>
           </View>
         </View>
+
+        <View style={styles.infoSection}>
+          <Text style={styles.sectionTitle}>Siparişlerim</Text>
+          <TouchableOpacity style={styles.orderButton}>
+            <Text style={styles.orderButtonText}>Siparişlerimi Görüntüle</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutButtonText}>Çıkış Yap</Text>
+        </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+
+      <Modal
+        visible={isAddressModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsAddressModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Adres Güncelle</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Yeni adresinizi girin"
+              value={newAddress}
+              onChangeText={setNewAddress}
+              multiline
+              numberOfLines={4}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setIsAddressModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleUpdateAddress}
+              >
+                <Text style={styles.modalButtonText}>Kaydet</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </ScrollView>
   );
 }
 
@@ -99,9 +279,18 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
   },
+  profileContent: {
+    flex: 1,
+    padding: 20,
+  },
   logoContainer: {
     alignItems: 'center',
     marginBottom: 40,
+  },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingVertical: 20,
   },
   welcomeText: {
     fontSize: 32,
@@ -114,6 +303,17 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#2c3e50',
     textAlign: 'center',
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 10,
+    color: '#2c3e50',
+  },
+  userEmail: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 5,
   },
   formContainer: {
     width: '100%',
@@ -171,5 +371,104 @@ const styles = StyleSheet.create({
     color: '#FF6B00',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  infoSection: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 15,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  infoText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#2c3e50',
+  },
+  orderButton: {
+    backgroundColor: '#FF6B00',
+    borderRadius: 10,
+    padding: 15,
+    alignItems: 'center',
+  },
+  orderButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  logoutButton: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#FF6B00',
+  },
+  logoutButtonText: {
+    color: '#FF6B00',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  editButton: {
+    padding: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cancelButton: {
+    backgroundColor: '#ddd',
+  },
+  saveButton: {
+    backgroundColor: '#FF6B00',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalButton: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginHorizontal: 5,
   },
 }); 

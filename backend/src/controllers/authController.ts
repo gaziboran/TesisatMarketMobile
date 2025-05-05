@@ -62,7 +62,8 @@ export const registerUser = async (req: Request, res: Response) => {
                 phone,
                 email,
                 fullName,
-                address
+                address,
+                roleId: 1
             }
         });
 
