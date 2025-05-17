@@ -2,6 +2,7 @@ import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image, Animated, 
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import { getCategories } from '../services/api';
 
 interface Category {
   id: number;
@@ -25,8 +26,8 @@ export default function HomeScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
-  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -38,19 +39,20 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      setLoadingCategories(true);
-      setCategoryError(null);
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch('http://localhost:3001/api/categories');
-        if (!response.ok) throw new Error('Kategoriler alınamadı');
-        const data = await response.json();
+        const data = await getCategories();
+        console.log('Kategoriler başarıyla alındı:', data);
         setCategories(data);
       } catch (err) {
-        setCategoryError('Kategoriler alınamadı');
+        console.error('Kategori çekme hatası:', err);
+        setError('Kategoriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
       } finally {
-        setLoadingCategories(false);
+        setLoading(false);
       }
     };
+
     fetchCategories();
   }, []);
 
@@ -64,32 +66,32 @@ export default function HomeScreen() {
     outputRange: [1, 0.5],
   });
 
-  const featuredProducts: Product[] = [
-    {
-      id: '1',
-      name: 'Musluk Bataryası',
-      price: '799.99',
-      image: 'https://productimages.hepsiburada.net/s/86/375-375/110000028946068.jpg',
-      description: 'Krom kaplama, seramik valf',
-      category: 'Su Tesisatı',
-    },
-    {
-      id: '2',
-      name: 'Sıva Altı LED Panel',
-      price: '259.99',
-      image: 'https://static.ticimax.cloud/41865/uploads/urunresimleri/buyuk/nisaluce-6w-siva-alti-led-panel-6500k-409e1-.jpg',
-      description: '24W, Beyaz ışık, Ultra ince',
-      category: 'Elektrik',
-    },
-    {
-      id: '3',
-      name: 'Dijital Şofben',
-      price: '2299.99',
-      image: 'https://cdn03.ciceksepeti.com/cicek/kcm62236045-1/L/akilli-dijital-sicaklik-ayarli-sofben-sh-3p-siyah-klasik-sh-3p-kcm62236045-1-d2f0694859c2449baa20d6031871dc64.jpg',
-      description: 'LCD ekran, Akıllı ısı kontrolü',
-      category: 'Isıtma',
-    },
-  ];
+const featuredProducts: Product[] = [
+  {
+    id: '1',
+    name: 'Musluk Bataryası',
+    price: '799.99',
+    image: 'https://productimages.hepsiburada.net/s/86/375-375/110000028946068.jpg',
+    description: 'Krom kaplama, seramik valf',
+    category: 'Su Tesisatı',
+  },
+  {
+    id: '2',
+    name: 'Sıva Altı LED Panel',
+    price: '259.99',
+    image: 'https://static.ticimax.cloud/41865/uploads/urunresimleri/buyuk/nisaluce-6w-siva-alti-led-panel-6500k-409e1-.jpg',
+    description: '24W, Beyaz ışık, Ultra ince',
+    category: 'Elektrik',
+  },
+  {
+    id: '3',
+    name: 'Dijital Şofben',
+    price: '2299.99',
+    image: 'https://cdn03.ciceksepeti.com/cicek/kcm62236045-1/L/akilli-dijital-sicaklik-ayarli-sofben-sh-3p-siyah-klasik-sh-3p-kcm62236045-1-d2f0694859c2449baa20d6031871dc64.jpg',
+    description: 'LCD ekran, Akıllı ısı kontrolü',
+    category: 'Isıtma',
+  },
+];
 
   const renderCategory = ({ item, index }: { item: Category; index: number }) => (
     <Animated.View
@@ -106,9 +108,17 @@ export default function HomeScreen() {
       ]}
     >
       <TouchableOpacity
-        onPress={() => router.push(`/products?category=${encodeURIComponent(item.name)}`)}
+        onPress={() => router.push({
+          pathname: '/products',
+          params: { category: item.name }
+        })}
       >
-        <Image source={{ uri: item.image || 'https://via.placeholder.com/100x100?text=Kategori' }} style={styles.categoryImage} />
+        <Image 
+          source={{ 
+            uri: `http://localhost:3001${item.image}`
+          }} 
+          style={styles.categoryImage} 
+        />
         <View style={styles.categoryInfo}>
           {item.icon ? (
             <Ionicons name={item.icon as any} size={24} color="#FF6B00" />
@@ -118,6 +128,14 @@ export default function HomeScreen() {
       </TouchableOpacity>
     </Animated.View>
   );
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#2980b9" style={{ flex: 1, marginTop: 50 }} />;
+  }
+
+  if (error) {
+    return <Text style={{ color: 'red', textAlign: 'center', marginTop: 50 }}>{error}</Text>;
+  }
 
   return (
     <Animated.ScrollView 
@@ -151,20 +169,14 @@ export default function HomeScreen() {
       {/* Kategoriler */}
       <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
         <Text style={styles.sectionTitle}>Popüler Kategoriler</Text>
-        {loadingCategories ? (
-          <ActivityIndicator size="large" color="#FF6B00" style={{ marginVertical: 20 }} />
-        ) : categoryError ? (
-          <Text style={{ color: 'red', textAlign: 'center' }}>{categoryError}</Text>
-        ) : (
-          <FlatList
-            data={categories}
-            renderItem={renderCategory}
-            keyExtractor={item => item.id.toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesContainer}
-          />
-        )}
+        <FlatList
+          data={categories}
+          renderItem={renderCategory}
+          keyExtractor={item => item.id.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContainer}
+        />
       </Animated.View>
 
       {/* Ürünler */}

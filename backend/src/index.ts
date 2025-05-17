@@ -1,11 +1,13 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/authRoutes';
 import productRoutes from './routes/productRoutes';
 import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
 import categoryRoutes from './routes/categoryRoutes';
+import { errorHandler } from './middleware/errorHandler';
 
 const prisma = new PrismaClient();
 const app = express();
@@ -16,12 +18,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Statik dosyalar için public klasörünü kullan
+app.use('/images', express.static(path.join(__dirname, '../public/images')));
+
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/categories', categoryRoutes);
 
 // Ana sayfa route'u
 app.get('/', (req, res) => {
@@ -29,16 +34,9 @@ app.get('/', (req, res) => {
 });
 
 // Hata yakalama middleware'i
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error(err.stack);
-    res.status(500).json({ 
-        success: false,
-        message: 'Bir hata oluştu',
-        error: process.env.NODE_ENV === 'development' ? err.message : 'Sunucu hatası'
-    });
-});
+app.use(errorHandler);
 
-// Veritabanı bağlantısını kontrol et ve sunucuyu başlat
+// Veritabanı bağlantısını test et ve sunucuyu başlat
 async function startServer() {
     try {
         // Veritabanı bağlantısını test et

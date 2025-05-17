@@ -1,167 +1,78 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../contexts/CartContext';
+import { useEffect, useState } from 'react';
 
 interface Product {
-  id: string;
+  id: number;
   name: string;
-  price: string;
+  price: number;
   image: string;
   description: string;
-  category: string;
+  category: { name: string };
+  stock: number;
 }
 
-const products: Product[] = [
-  // Su Tesisatı Ürünleri
-  {
-    id: '1',
-    name: 'Lavabo Bataryası',
-    price: '449.99',
-    image: 'https://productimages.hepsiburada.net/s/37/550/10566356295730.jpg',
-    description: 'Modern tasarım, krom kaplama, seramik valf',
-    category: 'Su Tesisatı',
-  },
-  {
-    id: '2',
-    name: 'Duş Bataryası',
-    price: '599.99',
-    image: 'https://productimages.hepsiburada.net/s/37/550/10566356295731.jpg',
-    description: 'Termostatik, yağmur başlıklı, el duşu dahil',
-    category: 'Su Tesisatı',
-  },
-  {
-    id: '3',
-    name: 'PPR Boru Seti',
-    price: '159.99',
-    image: 'https://productimages.hepsiburada.net/s/37/550/10566356295732.jpg',
-    description: '20mm çap, 10 metre, sıcak su dayanımlı',
-    category: 'Su Tesisatı',
-  },
-  {
-    id: '4',
-    name: 'Klozet',
-    price: '1299.99',
-    image: 'https://productimages.hepsiburada.net/s/37/550/10566356295733.jpg',
-    description: 'Gizli rezervuarlı, yavaş kapanan kapak',
-    category: 'Su Tesisatı',
-  },
-
-  // Elektrik Ürünleri
-  {
-    id: '5',
-    name: 'LED Panel',
-    price: '259.99',
-    image: 'https://productimages.hepsiburada.net/s/34/550/10460429672498.jpg',
-    description: '24W, Beyaz ışık, Ultra ince',
-    category: 'Elektrik',
-  },
-  {
-    id: '6',
-    name: 'Priz Kasası',
-    price: '89.99',
-    image: 'https://productimages.hepsiburada.net/s/31/550/10352096829490.jpg',
-    description: 'Topraklı, çocuk korumalı, beyaz',
-    category: 'Elektrik',
-  },
-  {
-    id: '7',
-    name: 'NYM Kablo',
-    price: '449.99',
-    image: 'https://productimages.hepsiburada.net/s/31/550/10352096829491.jpg',
-    description: '3x2.5mm², 100 metre, TSE belgeli',
-    category: 'Elektrik',
-  },
-  {
-    id: '8',
-    name: 'Sigorta Kutusu',
-    price: '349.99',
-    image: 'https://productimages.hepsiburada.net/s/31/550/10352096829492.jpg',
-    description: '12 modül, şeffaf kapaklı, sıva üstü',
-    category: 'Elektrik',
-  },
-
-  // Isıtma Ürünleri
-  {
-    id: '9',
-    name: 'Kombi',
-    price: '12999.99',
-    image: 'https://productimages.hepsiburada.net/s/42/550/10728905646130.jpg',
-    description: '24kW, yoğuşmalı, ErP uyumlu',
-    category: 'Isıtma',
-  },
-  {
-    id: '10',
-    name: 'Panel Radyatör',
-    price: '899.99',
-    image: 'https://productimages.hepsiburada.net/s/42/550/10707874234418.jpg',
-    description: '600x1200mm, çift panel, beyaz',
-    category: 'Isıtma',
-  },
-  {
-    id: '11',
-    name: 'Havlupan',
-    price: '599.99',
-    image: 'https://productimages.hepsiburada.net/s/42/550/10707874234419.jpg',
-    description: 'Krom, elektrikli, 500x800mm',
-    category: 'Isıtma',
-  },
-  {
-    id: '12',
-    name: 'Termostat',
-    price: '449.99',
-    image: 'https://productimages.hepsiburada.net/s/42/550/10707874234420.jpg',
-    description: 'Dijital, programlanabilir, kablosuz',
-    category: 'Isıtma',
-  },
-
-  // Hırdavat Ürünleri
-  {
-    id: '13',
-    name: 'Matkap Seti',
-    price: '799.99',
-    image: 'https://productimages.hepsiburada.net/s/37/550/10538725515314.jpg',
-    description: '24V, şarjlı, çift akü, çantalı',
-    category: 'Hırdavat',
-  },
-  {
-    id: '14',
-    name: 'El Aletleri Seti',
-    price: '449.99',
-    image: 'https://productimages.hepsiburada.net/s/37/550/10538725515315.jpg',
-    description: '115 parça, çantalı, profesyonel',
-    category: 'Hırdavat',
-  },
-  {
-    id: '15',
-    name: 'Merdiven',
-    price: '349.99',
-    image: 'https://productimages.hepsiburada.net/s/37/550/10538725515316.jpg',
-    description: '4+1 basamak, alüminyum, katlanır',
-    category: 'Hırdavat',
-  },
-  {
-    id: '16',
-    name: 'Kaynak Makinesi',
-    price: '1299.99',
-    image: 'https://productimages.hepsiburada.net/s/37/550/10538725515317.jpg',
-    description: 'İnverter, 200 amper, profesyonel',
-    category: 'Hırdavat',
-  },
-];
+interface Category {
+  id: number;
+  name: string;
+  icon?: string;
+  image?: string;
+  description?: string;
+}
 
 export default function ProductsScreen() {
   const { category } = useLocalSearchParams();
   const { addToCart } = useCart();
-  const filteredProducts = products.filter(product => product.category === category);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch('http://localhost:3001/api/products');
+        if (!response.ok) throw new Error('Ürünler alınamadı');
+        const data = await response.json();
+        setProducts(data);
+      } catch (err) {
+        setError('Ürünler alınamadı');
+        console.error('Ürün çekme hatası:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/categories');
+        if (!response.ok) throw new Error('Kategoriler alınamadı');
+        const data = await response.json();
+        setCategories(data);
+      } catch (err) {
+        // kategori hatası gösterme
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const filteredProducts = products.filter(product => product.category?.name === category);
+  const selectedCategory = categories.find(cat => cat.name === category);
 
   const handleAddToCart = (product: Product) => {
     addToCart({
-      id: product.id,
+      id: product.id.toString(),
       name: product.name,
-      price: product.price,
-      image: product.image,
-      category: product.category,
+      price: product.price.toString(),
+      image: `http://localhost:3001${product.image}`,
+      category: product.category?.name,
     });
 
     Alert.alert(
@@ -180,9 +91,20 @@ export default function ProductsScreen() {
     );
   };
 
+  if (loading) {
+    return <ActivityIndicator size="large" color="#2980b9" style={{ flex: 1, marginTop: 50 }} />;
+  }
+
+  if (error) {
+    return <Text style={{ color: 'red', textAlign: 'center', marginTop: 50 }}>{error}</Text>;
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
+        {selectedCategory && selectedCategory.image && (
+          <Image source={{ uri: `http://localhost:3001${selectedCategory.image}` }} style={styles.categoryImage} />
+        )}
         <Text style={styles.headerTitle}>{category}</Text>
       </View>
 
@@ -194,16 +116,16 @@ export default function ProductsScreen() {
             onPress={() => router.push({
               pathname: '/product-detail',
               params: {
-                id: product.id,
+                id: product.id.toString(),
                 name: product.name,
-                price: product.price,
-                image: product.image,
+                price: product.price.toString(),
+                image: `http://localhost:3001${product.image}`,
                 description: product.description,
-                category: product.category,
+                category: product.category?.name,
               },
             })}
           >
-            <Image source={{ uri: product.image }} style={styles.productImage} />
+            <Image source={{ uri: `http://localhost:3001${product.image}` }} style={styles.productImage} />
             <View style={styles.productInfo}>
               <Text style={styles.productTitle}>{product.name}</Text>
               <Text style={styles.productDescription}>{product.description}</Text>
@@ -236,11 +158,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#2c3e50',
+    marginTop: 8,
+  },
+  categoryImage: {
+    width: 120,
+    height: 80,
+    borderRadius: 12,
+    marginBottom: 8,
+    resizeMode: 'cover',
   },
   productsGrid: {
     padding: 16,

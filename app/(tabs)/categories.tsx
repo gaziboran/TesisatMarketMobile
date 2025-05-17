@@ -41,7 +41,7 @@ export default function CategoriesScreen() {
       style={styles.categoryCard}
       onPress={() => router.push(`/products?category=${encodeURIComponent(item.name)}`)}
     >
-      <Image source={{ uri: item.image || 'https://via.placeholder.com/100x100?text=Kategori' }} style={styles.categoryImage} />
+      <Image source={{ uri: item.image ? `http://localhost:3001${item.image}` : 'https://via.placeholder.com/100x100?text=Kategori' }} style={styles.categoryImage} />
       <View style={styles.categoryInfo}>
         {item.icon ? (
           <Ionicons name={item.icon as any} size={24} color="#2980b9" />

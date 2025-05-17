@@ -120,8 +120,8 @@ export default function ProfileScreen() {
   };
 
   if (isLoading) {
-    return (
-      <View style={styles.container}>
+  return (
+    <View style={styles.container}>
         <Text>Yükleniyor...</Text>
       </View>
     );
@@ -160,7 +160,7 @@ export default function ProfileScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-              />
+          />
             </View>
 
             <TouchableOpacity 
@@ -200,7 +200,7 @@ export default function ProfileScreen() {
           <View style={styles.infoItem}>
             <Ionicons name="call-outline" size={24} color="#FF6B00" />
             <Text style={styles.infoText}>{user.phone}</Text>
-          </View>
+              </View>
           <View style={styles.infoItem}>
             <Ionicons name="location-outline" size={24} color="#FF6B00" />
             <Text style={styles.infoText}>{user.address || 'Adres bilgisi girilmemiş'}</Text>
@@ -265,7 +265,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+      </ScrollView>
   );
 }
 
