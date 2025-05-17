@@ -1,11 +1,110 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useCart } from '../contexts/CartContext';
+import { useEffect, useState } from 'react';
+import { removeFromCart, getCart, updateCartQuantity } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useIsFocused } from '@react-navigation/native';
+
+interface CartItem {
+  id: number;
+  productId: number;
+  quantity: number;
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    image: string;
+    description: string;
+  };
+}
 
 export default function CartScreen() {
-  const { items, removeFromCart, updateQuantity, getTotalPrice } = useCart();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const isFocused = useIsFocused();
 
-  if (items.length === 0) {
+  const fetchCart = async () => {
+    if (!user) {
+      setCartItems([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await getCart();
+      setCartItems(data);
+    } catch (error) {
+      console.error('Sepet getirme hatası:', error);
+      setCartItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchCart();
+    }
+  }, [isFocused, user]);
+
+  const handleRemoveFromCart = async (cartId: number) => {
+    try {
+      await removeFromCart(cartId);
+      Alert.alert('Başarılı!', 'Ürün başarıyla sepetten kaldırıldı.');
+      fetchCart();
+    } catch (error) {
+      Alert.alert('Hata', 'Ürün sepetten kaldırılamadı.');
+    }
+  };
+
+  const handleUpdateQuantity = async (cartId: number, currentQuantity: number, change: number) => {
+    const newQuantity = currentQuantity + change;
+    
+    if (newQuantity < 1) return;
+
+    try {
+      setCartItems(prevItems => 
+        prevItems.map(item => 
+          item.id === cartId 
+            ? { ...item, quantity: newQuantity }
+            : item
+        )
+      );
+
+      await updateCartQuantity(cartId, newQuantity);
+    } catch (error) {
+      setCartItems(prevItems => 
+        prevItems.map(item => 
+          item.id === cartId 
+            ? { ...item, quantity: currentQuantity }
+            : item
+        )
+      );
+      Alert.alert('Hata', 'Miktar güncellenemedi. Lütfen tekrar deneyin.');
+    }
+  };
+
+  const getTotalPrice = () => {
+    return cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  };
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#2980b9" style={{ flex: 1, marginTop: 50 }} />;
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="log-in-outline" size={64} color="#bdc3c7" />
+        <Text style={styles.emptyText}>Giriş Yapmanız Gerekiyor</Text>
+        <Text style={styles.emptySubText}>Sepetinizi görüntülemek için giriş yapın</Text>
+      </View>
+    );
+  }
+
+  if (cartItems.length === 0) {
     return (
       <View style={styles.emptyContainer}>
         <Ionicons name="cart-outline" size={64} color="#bdc3c7" />
@@ -18,35 +117,31 @@ export default function CartScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.itemsContainer}>
-        {items.map((item) => (
+        {cartItems.map((item) => (
           <View key={item.id} style={styles.cartItem}>
-            <Image source={{ uri: item.image }} style={styles.itemImage} />
+            <Image source={{ uri: `http://localhost:3001${item.product.image}` }} style={styles.itemImage} />
             <View style={styles.itemInfo}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemPrice}>₺{item.price}</Text>
-              
+              <Text style={styles.itemName}>{item.product.name}</Text>
+              <Text style={styles.itemPrice}>₺{item.product.price}</Text>
               <View style={styles.quantityContainer}>
                 <TouchableOpacity
                   style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                  onPress={() => handleUpdateQuantity(item.id, item.quantity, -1)}
                 >
                   <Ionicons name="remove" size={20} color="#2c3e50" />
                 </TouchableOpacity>
-                
                 <Text style={styles.quantityText}>{item.quantity}</Text>
-                
                 <TouchableOpacity
                   style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                  onPress={() => handleUpdateQuantity(item.id, item.quantity, 1)}
                 >
                   <Ionicons name="add" size={20} color="#2c3e50" />
                 </TouchableOpacity>
               </View>
             </View>
-
             <TouchableOpacity
               style={styles.removeButton}
-              onPress={() => removeFromCart(item.id)}
+              onPress={() => handleRemoveFromCart(item.id)}
             >
               <Ionicons name="trash-outline" size={24} color="#e74c3c" />
             </TouchableOpacity>
@@ -134,20 +229,22 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 8,
   },
   quantityButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#f0f2f5',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
   quantityText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#2c3e50',
     marginHorizontal: 12,
+    minWidth: 30,
+    textAlign: 'center',
   },
   removeButton: {
     padding: 8,

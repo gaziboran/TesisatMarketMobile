@@ -1,8 +1,9 @@
 import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCart } from '../contexts/CartContext';
 import { useEffect, useState } from 'react';
+import { addToCart } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 interface Product {
   id: number;
@@ -24,11 +25,11 @@ interface Category {
 
 export default function ProductsScreen() {
   const { category } = useLocalSearchParams();
-  const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth ? useAuth() : { user: null };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -66,29 +67,28 @@ export default function ProductsScreen() {
   const filteredProducts = products.filter(product => product.category?.name === category);
   const selectedCategory = categories.find(cat => cat.name === category);
 
-  const handleAddToCart = (product: Product) => {
-    addToCart({
-      id: product.id.toString(),
-      name: product.name,
-      price: product.price.toString(),
-      image: `http://localhost:3001${product.image}`,
-      category: product.category?.name,
-    });
-
-    Alert.alert(
-      "Başarılı!",
-      "Ürün sepetinize eklendi.",
-      [
-        {
-          text: "Alışverişe Devam Et",
-          style: "cancel"
-        },
-        { 
-          text: "Sepete Git", 
-          onPress: () => router.push("/cart")
-        }
-      ]
-    );
+  const handleAddToCart = async (product: Product) => {
+    try {
+      await addToCart(Number(product.id), 1);
+      Alert.alert(
+        "Başarılı!",
+        "Ürün başarıyla sepete eklendi.",
+        [
+          {
+            text: "Alışverişe Devam Et",
+            style: "cancel"
+          },
+          { 
+            text: "Sepete Git", 
+            onPress: () => {
+              router.push("/cart");
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert("Hata", "Ürün sepete eklenemedi.");
+    }
   };
 
   if (loading) {
@@ -132,10 +132,7 @@ export default function ProductsScreen() {
               <Text style={styles.productPrice}>₺{product.price}</Text>
               <TouchableOpacity 
                 style={styles.addToCartButton}
-                onPress={(e) => {
-                  e.stopPropagation(); // Kartın tıklanmasını engelle
-                  handleAddToCart(product);
-                }}
+                onPress={() => handleAddToCart(product)}
               >
                 <Ionicons name="cart-outline" size={20} color="#fff" />
                 <Text style={styles.addToCartText}>Sepete Ekle</Text>

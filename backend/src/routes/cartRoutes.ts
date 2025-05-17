@@ -1,21 +1,19 @@
 import express from 'express';
+import { addToCart, removeFromCart, getCart, updateCartItem } from '../controllers/cartController';
 import { authenticateToken } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Sepeti görüntüle
-router.get('/', authenticateToken, async (req, res) => {
-    res.json({ message: 'Sepet içeriği gelecek' });
-});
+// Sepeti listele (örnek: userId=1)
+router.get('/:userId', getCart);
 
 // Sepete ürün ekle
-router.post('/add', authenticateToken, async (req, res) => {
-    res.json({ message: 'Ürün sepete eklenecek' });
-});
+router.post('/', addToCart);
 
-// Sepetten ürün çıkar
-router.delete('/remove/:productId', authenticateToken, async (req, res) => {
-    res.json({ message: 'Ürün sepetten çıkarılacak' });
-});
+// Sepetten ürün sil
+router.delete('/:id', removeFromCart);
+
+// Sepet miktarını güncelle
+router.patch('/:id', authenticateToken, updateCartItem);
 
 export default router; 

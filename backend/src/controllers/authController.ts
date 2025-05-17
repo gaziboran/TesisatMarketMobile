@@ -69,15 +69,6 @@ export const registerUser = async (req: Request, res: Response) => {
 
         console.log('Kullanıcı oluşturuldu:', user);
 
-        // Kullanıcı için boş sepet oluştur
-        const cart = await prisma.cart.create({
-            data: {
-                userId: user.id
-            }
-        });
-
-        console.log('Sepet oluşturuldu:', cart);
-
         // JWT token oluştur
         const token = jwt.sign(
             { userId: user.id },
@@ -121,7 +112,7 @@ export const loginUser = async (req: Request, res: Response) => {
                 ]
             },
             include: {
-                cart: true
+                carts: true
             }
         });
 
@@ -153,7 +144,12 @@ export const loginUser = async (req: Request, res: Response) => {
                 email: user.email,
                 fullName: user.fullName,
                 address: user.address,
-                cartId: user.cart?.id
+                carts: user.carts.map(cart => ({
+                    id: cart.id,
+                    userId: cart.userId,
+                    productId: cart.productId,
+                    quantity: cart.quantity
+                }))
             }
         });
     } catch (error) {

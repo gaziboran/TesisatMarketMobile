@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { CartProvider } from './contexts/CartContext';
+import { AuthProvider } from './context/AuthContext';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -29,16 +30,20 @@ export default function RootLayout() {
   }
 
   return (
+    <AuthProvider>
     <CartProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="product-detail" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="register" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="auto" />
         <Redirect href="/(tabs)" />
       </ThemeProvider>
     </CartProvider>
+    </AuthProvider>
   );
 }
