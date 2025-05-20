@@ -101,4 +101,22 @@ export const updateCartQuantity = async (cartId: number, quantity: number) => {
   }
 };
 
+export const createOrder = async (orderData: {
+  userId: number;
+  address: string;
+  products: Array<{
+    productId: number;
+    quantity: number;
+  }>;
+  totalPrice: number;
+}) => {
+  try {
+    const response = await api.post('/orders', orderData);
+    return response.data;
+  } catch (error) {
+    console.error('Sipariş oluşturma hatası:', error);
+    throw error;
+  }
+};
+
 export default api; 

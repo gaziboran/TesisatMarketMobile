@@ -70,22 +70,22 @@ export default function ProductsScreen() {
   const handleAddToCart = async (product: Product) => {
     try {
       await addToCart(Number(product.id), 1);
-      Alert.alert(
-        "Başarılı!",
+    Alert.alert(
+      "Başarılı!",
         "Ürün başarıyla sepete eklendi.",
-        [
-          {
-            text: "Alışverişe Devam Et",
-            style: "cancel"
-          },
-          { 
-            text: "Sepete Git", 
+      [
+        {
+          text: "Alışverişe Devam Et",
+          style: "cancel"
+        },
+        { 
+          text: "Sepete Git", 
             onPress: () => {
               router.push("/cart");
             }
-          }
-        ]
-      );
+        }
+      ]
+    );
     } catch (error) {
       Alert.alert("Hata", "Ürün sepete eklenemedi.");
     }

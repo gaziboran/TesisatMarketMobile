@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { removeFromCart, getCart, updateCartQuantity } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useIsFocused } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 interface CartItem {
   id: number;
@@ -23,6 +24,7 @@ export default function CartScreen() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const isFocused = useIsFocused();
+  const router = useRouter();
 
   const fetchCart = async () => {
     if (!user) {
@@ -155,7 +157,10 @@ export default function CartScreen() {
           <Text style={styles.totalPrice}>₺{getTotalPrice().toFixed(2)}</Text>
         </View>
 
-        <TouchableOpacity style={styles.checkoutButton}>
+        <TouchableOpacity 
+          style={styles.checkoutButton}
+          onPress={() => router.push('/address')}
+        >
           <Text style={styles.checkoutText}>Siparişi Tamamla</Text>
         </TouchableOpacity>
       </View>

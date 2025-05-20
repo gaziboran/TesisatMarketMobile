@@ -11,28 +11,28 @@ async function main() {
   // Kategorileri ekle
   const categories = [
     {
-      name: 'Su Tesisatı',
-      description: 'Lavabo bataryası, duş bataryası, PPR boru seti ve klozet gibi su tesisatı ürünleri',
-      image: '/images/categories/su-tesisati.jpg',
-      icon: 'water-outline'
-    },
-    {
       name: 'Elektrik',
-      description: 'LED panel, priz kasası, NYM kablo ve sigorta kutusu gibi elektrik ürünleri',
+      description: 'Elektrik malzemeleri ve ekipmanları',
       image: '/images/categories/elektrik.jpg',
-      icon: 'flash-outline'
-    },
-    {
-      name: 'Isıtma',
-      description: 'Kombi, panel radyatör, havlupan ve termostat gibi ısıtma ürünleri',
-      image: '/images/categories/isitma.jpg',
-      icon: 'flame-outline'
+      icon: '⚡'
     },
     {
       name: 'Hırdavat',
-      description: 'Matkap seti, el aletleri seti, merdiven ve kaynak makinesi gibi hırdavat ürünleri',
+      description: 'Hırdavat malzemeleri ve aletleri',
       image: '/images/categories/hirdavat.jpg',
-      icon: 'hammer-outline'
+      icon: '🔧'
+    },
+    {
+      name: 'Isıtma',
+      description: 'Isıtma sistemleri ve ekipmanları',
+      image: '/images/categories/isitma.jpg',
+      icon: '🔥'
+    },
+    {
+      name: 'Su Tesisatı',
+      description: 'Su tesisatı malzemeleri ve ekipmanları',
+      image: '/images/categories/su-tesisati.jpg',
+      icon: '💧'
     }
   ];
 
@@ -41,115 +41,121 @@ async function main() {
     categories.map(category => prisma.category.create({ data: category }))
   );
 
+  // Kategori ID'lerini al
+  const elektrikId = createdCategories.find(c => c.name === 'Elektrik')?.id;
+  const hirdavatId = createdCategories.find(c => c.name === 'Hırdavat')?.id;
+  const isitmaId = createdCategories.find(c => c.name === 'Isıtma')?.id;
+  const suTesisatiId = createdCategories.find(c => c.name === 'Su Tesisatı')?.id;
+
+  if (!elektrikId || !hirdavatId || !isitmaId || !suTesisatiId) {
+    throw new Error('Kategori ID\'leri bulunamadı');
+  }
+
   // Ürünleri ekle
   const products = [
-    // Su Tesisatı
-    {
-      name: 'Lavabo Bataryası',
-      price: 449.99,
-      image: '/images/products/lavabo-bataryasi.jpg',
-      description: 'Modern tasarım, krom kaplama, seramik valf',
-      categoryId: createdCategories[0].id,
-      stock: 50
-    },
     {
       name: 'Duş Bataryası',
-      price: 599.99,
-      image: '/images/products/dus-bataryasi.jpg',
-      description: 'Termostatik, yağmur başlıklı, el duşu dahil',
-      categoryId: createdCategories[0].id,
-      stock: 30
-    },
-    {
-      name: 'PPR Boru Seti',
-      price: 159.99,
-      image: '/images/products/ppr-boru.jpg',
-      description: '20mm çap, 10 metre, sıcak su dayanımlı',
-      categoryId: createdCategories[0].id,
-      stock: 100
-    },
-    {
-      name: 'Klozet',
+      description: 'Modern tasarımlı duş bataryası',
       price: 1299.99,
-      image: '/images/products/klozet.jpg',
-      description: 'Gizli rezervuarlı, yavaş kapanan kapak',
-      categoryId: createdCategories[0].id,
-      stock: 20
-    },
-    // Elektrik
-    {
-      name: 'LED Panel',
-      price: 259.99,
-      image: '/images/products/led-panel.jpg',
-      description: '24W, Beyaz ışık, ultra ince',
-      categoryId: createdCategories[1].id,
-      stock: 40
-    },
-    {
-      name: 'Priz Kasası',
-      price: 39.99,
-      image: '/images/products/priz-kasasi.jpg',
-      description: 'Standart tip, kolay montaj',
-      categoryId: createdCategories[1].id,
-      stock: 200
-    },
-    {
-      name: 'NYM Kablo',
-      price: 129.99,
-      image: '/images/products/nym-kablo.jpg',
-      description: '3x2.5 mm², 50 metre',
-      categoryId: createdCategories[1].id,
-      stock: 60
-    },
-    // Isıtma
-    {
-      name: 'Kombi',
-      price: 8999.99,
-      image: '/images/products/kombi.jpg',
-      description: 'Yoğuşmalı, A enerji sınıfı',
-      categoryId: createdCategories[2].id,
-      stock: 10
-    },
-    {
-      name: 'Panel Radyatör',
-      price: 799.99,
-      image: '/images/products/panel-radyator.jpg',
-      description: '600x1200 mm, yüksek verim',
-      categoryId: createdCategories[2].id,
-      stock: 25
-    },
-    {
-      name: 'Termostat',
-      price: 349.99,
-      image: '/images/products/termostat.jpg',
-      description: 'Dijital ekran, programlanabilir',
-      categoryId: createdCategories[2].id,
-      stock: 35
-    },
-    // Hırdavat
-    {
-      name: 'Matkap Seti',
-      price: 1199.99,
-      image: '/images/products/matkap-seti.jpg',
-      description: '12V, 2 akülü, 50 parça uç seti',
-      categoryId: createdCategories[3].id,
-      stock: 15
+      stock: 50,
+      image: '/images/products/dus-bataryasi.jpg',
+      categoryId: suTesisatiId
     },
     {
       name: 'El Aletleri Seti',
-      price: 499.99,
+      description: 'Profesyonel el aletleri seti',
+      price: 2499.99,
+      stock: 30,
       image: '/images/products/el-aletleri-seti.jpg',
-      description: 'Çantalı, 40 parça',
-      categoryId: createdCategories[3].id,
-      stock: 30
+      categoryId: hirdavatId
+    },
+    {
+      name: 'Klozet',
+      description: 'Modern tasarımlı klozet',
+      price: 3499.99,
+      stock: 20,
+      image: '/images/products/klozet.jpg',
+      categoryId: suTesisatiId
+    },
+    {
+      name: 'Kombi',
+      description: 'Enerji tasarruflu kombi',
+      price: 12999.99,
+      stock: 15,
+      image: '/images/products/kombi.jpg',
+      categoryId: isitmaId
+    },
+    {
+      name: 'Lavabo Bataryası',
+      description: 'Şık tasarımlı lavabo bataryası',
+      price: 899.99,
+      stock: 40,
+      image: '/images/products/lavabo-bataryasi.jpg',
+      categoryId: suTesisatiId
+    },
+    {
+      name: 'LED Panel',
+      description: 'Enerji tasarruflu LED panel',
+      price: 599.99,
+      stock: 25,
+      image: '/images/products/led-panel.jpg',
+      categoryId: elektrikId
+    },
+    {
+      name: 'Matkap Seti',
+      description: 'Profesyonel matkap seti',
+      price: 1999.99,
+      stock: 35,
+      image: '/images/products/matkap-seti.jpg',
+      categoryId: hirdavatId
     },
     {
       name: 'Merdiven',
-      price: 699.99,
+      description: 'Güvenli ve sağlam merdiven',
+      price: 799.99,
+      stock: 20,
       image: '/images/products/merdiven.jpg',
-      description: '6 basamaklı, alüminyum',
-      categoryId: createdCategories[3].id,
-      stock: 12
+      categoryId: hirdavatId
+    },
+    {
+      name: 'NYM Kablo',
+      description: 'Kaliteli NYM kablo',
+      price: 299.99,
+      stock: 100,
+      image: '/images/products/nym-kablo.jpg',
+      categoryId: elektrikId
+    },
+    {
+      name: 'Panel Radyatör',
+      description: 'Modern panel radyatör',
+      price: 2499.99,
+      stock: 25,
+      image: '/images/products/panel-radyator.jpg',
+      categoryId: isitmaId
+    },
+    {
+      name: 'PPR Boru',
+      description: 'Kaliteli PPR boru',
+      price: 199.99,
+      stock: 200,
+      image: '/images/products/ppr-boru.jpg',
+      categoryId: suTesisatiId
+    },
+    {
+      name: 'Priz Kasası',
+      description: 'Güvenli priz kasası',
+      price: 149.99,
+      stock: 50,
+      image: '/images/products/priz-kasasi.jpg',
+      categoryId: elektrikId
+    },
+    {
+      name: 'Termostat',
+      description: 'Akıllı termostat',
+      price: 899.99,
+      stock: 30,
+      image: '/images/products/termostat.jpg',
+      categoryId: isitmaId
     }
   ];
 
