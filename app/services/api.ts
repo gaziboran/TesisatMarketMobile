@@ -119,4 +119,14 @@ export const createOrder = async (orderData: {
   }
 };
 
+export const getUserOrders = async (userId: number) => {
+  try {
+    const response = await api.get(`/orders?userId=${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Siparişler getirilirken hata:', error);
+    throw error;
+  }
+};
+
 export default api; 

@@ -73,7 +73,10 @@ export default function AddressScreen() {
       window.alert('Siparişiniz başarıyla oluşturuldu');
       
       // Sepeti temizle ve sepet ekranına yönlendir
-      router.replace('/(tabs)/cart');
+      router.replace({
+        pathname: '/(tabs)/cart',
+        params: { refresh: 'true' }
+      });
     } catch (error) {
       console.error('Sipariş oluşturma hatası:', error);
       Alert.alert('Hata', 'Sipariş oluşturulurken bir hata oluştu.');

@@ -1,19 +1,20 @@
 import express from 'express';
-import { createOrder } from '../controllers/orderController';
+import { createOrder, getUserOrders } from '../controllers/orderController';
 import { authenticateToken } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
+// Tüm sipariş route'ları için authentication gerekli
+router.use(authenticateToken);
+
 // Sipariş oluştur
-router.post('/', authenticateToken, createOrder);
+router.post('/', createOrder);
 
 // Sipariş listesi
-router.get('/', authenticateToken, async (req, res) => {
-    res.json({ message: 'Sipariş listesi gelecek' });
-});
+router.get('/', getUserOrders);
 
 // Sipariş detayı
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     res.json({ message: 'Sipariş detayı gelecek' });
 });
 

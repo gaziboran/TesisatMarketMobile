@@ -218,7 +218,10 @@ export default function ProfileScreen() {
 
         <View style={styles.infoSection}>
           <Text style={styles.sectionTitle}>Siparişlerim</Text>
-          <TouchableOpacity style={styles.orderButton}>
+          <TouchableOpacity 
+            style={styles.orderButton}
+            onPress={() => router.push('/orders')}
+          >
             <Text style={styles.orderButtonText}>Siparişlerimi Görüntüle</Text>
           </TouchableOpacity>
         </View>

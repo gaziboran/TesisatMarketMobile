@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { removeFromCart, getCart, updateCartQuantity } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useIsFocused } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
 import { useRouter } from 'expo-router';
 
 interface CartItem {
@@ -24,6 +25,7 @@ export default function CartScreen() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const isFocused = useIsFocused();
+  const params = useLocalSearchParams();
   const router = useRouter();
 
   const fetchCart = async () => {
@@ -46,10 +48,10 @@ export default function CartScreen() {
   };
 
   useEffect(() => {
-    if (isFocused) {
+    if (isFocused || params.refresh === 'true') {
       fetchCart();
     }
-  }, [isFocused, user]);
+  }, [isFocused, params.refresh]);
 
   const handleRemoveFromCart = async (cartId: number) => {
     try {

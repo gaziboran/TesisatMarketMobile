@@ -3,9 +3,29 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const createOrder = async (req: Request, res: Response) => {
+// Request tipini genişlet
+interface AuthRequest extends Request {
+  user?: {
+    userId: number;
+  };
+}
+
+export const createOrder = async (req: AuthRequest, res: Response) => {
     try {
-        const { userId, address, products, totalPrice } = req.body;
+        const { address, products, totalPrice } = req.body;
+        const userId = req.user?.userId;
+        
+        if (!userId) {
+            console.error('Kullanıcı kimliği bulunamadı');
+            return res.status(401).json({ error: 'Oturum açmanız gerekiyor' });
+        }
+        
+        console.log('Yeni sipariş oluşturuluyor:', {
+            userId,
+            address,
+            products,
+            totalPrice
+        });
 
         // Order oluştur
         const order = await prisma.order.create({
@@ -18,7 +38,7 @@ export const createOrder = async (req: Request, res: Response) => {
                     create: products.map((product: any) => ({
                         productId: product.productId,
                         quantity: product.quantity,
-                        price: totalPrice / products.length // Her ürün için eşit fiyat dağıtımı
+                        price: totalPrice / products.length
                     }))
                 }
             },
@@ -31,14 +51,62 @@ export const createOrder = async (req: Request, res: Response) => {
             }
         });
 
+        console.log('Sipariş başarıyla oluşturuldu:', {
+            orderId: order.id,
+            userId: order.userId,
+            total: order.total,
+            status: order.status
+        });
+
         // Sipariş oluşturulduktan sonra sepeti temizle
         await prisma.cart.deleteMany({
             where: { userId }
         });
 
+        console.log('Kullanıcı sepeti temizlendi:', { userId });
+
         res.status(201).json(order);
     } catch (error) {
         console.error('Sipariş oluşturma hatası:', error);
         res.status(500).json({ error: 'Sipariş oluşturulurken bir hata oluştu' });
+    }
+};
+
+export const getUserOrders = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+
+        if (!userId) {
+            console.error('Kullanıcı kimliği bulunamadı');
+            return res.status(401).json({ error: 'Oturum açmanız gerekiyor' });
+        }
+
+        console.log('Kullanıcı siparişleri getiriliyor:', { userId });
+
+        const orders = await prisma.order.findMany({
+            where: {
+                userId: userId
+            },
+            include: {
+                items: {
+                    include: {
+                        product: true
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        console.log('Kullanıcı siparişleri başarıyla getirildi:', {
+            userId,
+            orderCount: orders.length
+        });
+
+        res.json(orders);
+    } catch (error) {
+        console.error('Sipariş getirme hatası:', error);
+        res.status(500).json({ error: 'Siparişler getirilirken bir hata oluştu' });
     }
 }; 
