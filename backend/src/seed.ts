@@ -32,11 +32,10 @@ async function main() {
     ];
 
     for (const category of categories) {
-        await prisma.category.upsert({
-            where: { name: category.name },
-            update: {},
-            create: category
-        });
+        const existing = await prisma.category.findFirst({ where: { name: category.name } });
+        if (!existing) {
+            await prisma.category.create({ data: category });
+        }
     }
 
     console.log('Kategoriler başarıyla eklendi');

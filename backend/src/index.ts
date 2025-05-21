@@ -7,6 +7,7 @@ import productRoutes from './routes/productRoutes';
 import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
 import categoryRoutes from './routes/categoryRoutes';
+import commentRoutes from './routes/commentRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 const prisma = new PrismaClient();
@@ -27,6 +28,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/comments', commentRoutes);
 
 // Ana sayfa route'u
 app.get('/', (req, res) => {

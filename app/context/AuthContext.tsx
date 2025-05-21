@@ -1,19 +1,14 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
-  fullName: string;
-  phone: string;
-  address: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -23,50 +18,42 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Uygulama başladığında token ve kullanıcı bilgilerini kontrol et
-    const loadStoredData = async () => {
+    // Uygulama başladığında kullanıcı bilgilerini kontrol et
+    const loadStoredUser = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('token');
         const storedUser = await AsyncStorage.getItem('user');
-        
-        if (storedToken && storedUser) {
-          setToken(storedToken);
+        if (storedUser) {
           setUser(JSON.parse(storedUser));
-          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         }
       } catch (error) {
-        console.error('Token yükleme hatası:', error);
+        console.error('Kullanıcı bilgileri yüklenirken hata:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadStoredData();
+    loadStoredUser();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
-        username: email,
-        password
+      // Gerçek API çağrısı
+      const response = await fetch('http://localhost:3001/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password })
       });
-
-      const { token: newToken, user: userData } = response.data;
-
-      // Token ve kullanıcı bilgilerini kaydet
-      await AsyncStorage.setItem('token', newToken);
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-
-      // State'i güncelle
-      setToken(newToken);
-      setUser(userData);
-
-      // Axios header'ını güncelle
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+      const data = await response.json();
+      if (data.token && data.user) {
+        await AsyncStorage.setItem('user', JSON.stringify(data.user));
+        await AsyncStorage.setItem('token', data.token);
+        setUser(data.user);
+      } else {
+        throw new Error(data.message || 'Giriş başarısız!');
+      }
     } catch (error) {
       console.error('Giriş hatası:', error);
       throw error;
@@ -75,19 +62,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
-      setToken(null);
+      await AsyncStorage.removeItem('token');
       setUser(null);
-      delete axios.defaults.headers.common['Authorization'];
     } catch (error) {
       console.error('Çıkış hatası:', error);
       throw error;
     }
   };
 
+  if (isLoading) {
+    return null; // veya bir loading spinner
+  }
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

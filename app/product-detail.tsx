@@ -1,8 +1,11 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image, Alert, TextInput } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Image, Alert, TextInput, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from './contexts/CartContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from './context/AuthContext';
+import api from './services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Review {
   id: string;
@@ -10,6 +13,15 @@ interface Review {
   rating: number;
   comment: string;
   date: string;
+}
+
+interface Comment {
+  id: string;
+  userId: string;
+  productId: string;
+  comment: string;
+  timestamp: string;
+  userName: string;
 }
 
 // Örnek yorumlar - Gerçek uygulamada API'den gelecek
@@ -40,8 +52,46 @@ const sampleReviews: Review[] = [
 export default function ProductDetailScreen() {
   const { id, name, price, image, description, category } = useLocalSearchParams();
   const { addToCart } = useCart();
+  const { user, isLoading: authLoading } = useAuth();
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [showCommentInput, setShowCommentInput] = useState(false);
+  const [commentLoading, setCommentLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading) {
+      fetchProduct();
+      fetchComments();
+    }
+  }, [id, authLoading]);
+
+  useEffect(() => {
+    setNewComment('');
+    setShowCommentInput(false);
+    setCommentLoading(false);
+  }, [user]);
+
+  const fetchProduct = async () => {
+    try {
+      const response = await api.get(`/products/${id}`);
+      setProduct(response.data);
+    } catch (error) {
+      console.error('Ürün yüklenirken hata:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const response = await api.get(`/comments?productId=${id}`);
+      setComments(response.data);
+    } catch (error) {
+      console.error('Yorumlar yüklenirken hata:', error);
+    }
+  };
 
   const handleAddToCart = () => {
     addToCart({
@@ -81,14 +131,70 @@ export default function ProductDetailScreen() {
     ));
   };
 
-  const handleAddComment = () => {
-    if (newComment.trim()) {
-      // Burada yorum API'ye gönderilecek
-      Alert.alert("Başarılı", "Yorumunuz gönderildi ve incelendikten sonra yayınlanacaktır.");
+  const handleAddComment = async () => {
+    // Her yorumda en güncel kullanıcıyı AsyncStorage'dan çek
+    let currentUser = user;
+    try {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+      }
+    } catch (e) {
+      // ignore
+    }
+    if (!currentUser) {
+      console.log('Yorum yapabilmek için giriş yapmalısınız');
+      return;
+    }
+    if (!newComment.trim()) {
+      console.log('Lütfen bir yorum yazın');
+      return;
+    }
+    setCommentLoading(true);
+    try {
+      await api.post('/comments', {
+        userId: currentUser.id,
+        productId: id,
+        comment: newComment,
+        timestamp: new Date().toISOString(),
+        userName: currentUser.username
+      });
       setNewComment('');
       setShowCommentInput(false);
+      fetchComments();
+    } catch (error) {
+      console.error('Yorum gönderilirken hata:', error);
+    } finally {
+      setCommentLoading(false);
     }
   };
+
+  const handleLogin = () => {
+    Alert.alert(
+      "Giriş Gerekli",
+      "Yorum yapabilmek için giriş yapmalısınız.",
+      [
+        {
+          text: "İptal",
+          style: "cancel"
+        },
+        {
+          text: "Giriş Yap",
+          onPress: () => {
+            router.back();
+          }
+        }
+      ]
+    );
+  };
+
+  if (loading || authLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2980b9" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -133,15 +239,24 @@ export default function ProductDetailScreen() {
         <View style={styles.section}>
           <View style={styles.reviewsHeader}>
             <Text style={styles.sectionTitle}>Müşteri Yorumları</Text>
+            {user ? (
             <TouchableOpacity 
               style={styles.addReviewButton}
               onPress={() => setShowCommentInput(true)}
             >
               <Text style={styles.addReviewText}>Yorum Yap</Text>
             </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={styles.loginButton}
+                onPress={handleLogin}
+              >
+                <Text style={styles.loginButtonText}>Giriş Yap</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
-          {showCommentInput && (
+          {showCommentInput && user && (
             <View style={styles.commentInputContainer}>
               <TextInput
                 style={styles.commentInput}
@@ -158,32 +273,39 @@ export default function ProductDetailScreen() {
                     setNewComment('');
                   }}
                 >
-                  <Text style={styles.cancelButtonText}>İptal</Text>
+                  <Text style={styles.buttonText}>İptal</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={[styles.commentButton, styles.submitButton]}
                   onPress={handleAddComment}
+                  disabled={commentLoading}
                 >
-                  <Text style={styles.submitButtonText}>Gönder</Text>
+                  {commentLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.buttonText}>Gönder</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
-          {sampleReviews.map((review) => (
-            <View key={review.id} style={styles.reviewItem}>
-              <View style={styles.reviewHeader}>
-                <Text style={styles.reviewerName}>{review.userName}</Text>
-                <View style={styles.ratingContainer}>
-                  {renderStars(review.rating)}
+          <View style={styles.commentsList}>
+            {comments.map((comment) => (
+              <View key={comment.id} style={styles.commentItem}>
+                <View style={styles.commentHeader}>
+                  <Text style={styles.commentUserHighlight}>{comment.userName}</Text>
+                  <Text style={styles.commentDate}>
+                    {new Date(comment.timestamp).toLocaleDateString('tr-TR')}
+                  </Text>
                 </View>
+                <Text style={styles.commentText}>{comment.comment}</Text>
               </View>
-              <Text style={styles.reviewComment}>{review.comment}</Text>
-              <Text style={styles.reviewDate}>
-                {new Date(review.date).toLocaleDateString('tr-TR')}
-              </Text>
+            ))}
+            {comments.length === 0 && (
+              <Text style={styles.noComments}>Henüz yorum yapılmamış</Text>
+            )}
             </View>
-          ))}
         </View>
 
         {/* Sepete Ekle Butonu */}
@@ -302,73 +424,95 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  reviewItem: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+  loginButton: {
+    backgroundColor: '#27ae60',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
-  reviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  reviewerName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2c3e50',
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-  },
-  reviewComment: {
+  loginButtonText: {
+    color: '#fff',
     fontSize: 14,
-    color: '#2c3e50',
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  reviewDate: {
-    fontSize: 12,
-    color: '#7f8c8d',
+    fontWeight: '500',
   },
   commentInputContainer: {
-    marginBottom: 16,
+    marginTop: 10,
+    marginBottom: 20,
   },
   commentInput: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
     borderWidth: 1,
-    borderColor: '#e9ecef',
-    minHeight: 80,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    minHeight: 100,
     textAlignVertical: 'top',
   },
   commentButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 8,
+    marginTop: 10,
+    gap: 10,
   },
   commentButton: {
-    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    marginLeft: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
   },
   cancelButton: {
-    backgroundColor: '#e9ecef',
+    backgroundColor: '#e74c3c',
   },
   submitButton: {
     backgroundColor: '#2980b9',
   },
-  cancelButtonText: {
-    color: '#2c3e50',
-    fontWeight: '500',
-  },
-  submitButtonText: {
+  buttonText: {
     color: '#fff',
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  commentsList: {
+    marginTop: 15,
+  },
+  commentItem: {
+    backgroundColor: '#f8f9fa',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  commentUser: {
+    fontWeight: '600',
+    color: '#2c3e50',
+  },
+  commentUserHighlight: {
+    fontWeight: 'bold',
+    color: '#1565c0',
+    fontSize: 16,
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  commentDate: {
+    color: '#7f8c8d',
+    fontSize: 12,
+  },
+  commentText: {
+    color: '#34495e',
+    lineHeight: 20,
+  },
+  noComments: {
+    textAlign: 'center',
+    color: '#7f8c8d',
+    fontStyle: 'italic',
+    marginTop: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
   },
 }); 

@@ -20,6 +20,7 @@ model User {
   orders    Order[]
   roleId    Int      @default(1)
   carts     Cart[]
+  comments  Comment[]
 }
 
 model Category {
@@ -46,6 +47,7 @@ model Product {
   updatedAt   DateTime  @updatedAt
   orderItems  OrderItem[]
   carts       Cart[]
+  comments    Comment[]
 }
 
 model Order {
@@ -81,4 +83,15 @@ model Cart {
   quantity   Int      @default(1)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  comment   String
+  timestamp DateTime @default(now())
+  userId    Int
+  productId Int
+
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
 } 
