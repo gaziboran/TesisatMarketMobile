@@ -226,6 +226,16 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.infoSection}>
+          <Text style={styles.sectionTitle}>Tesisat Hizmetleri</Text>
+          <TouchableOpacity 
+            style={[styles.orderButton, { backgroundColor: '#FF6B00' }]}
+            onPress={() => router.push('/plumber-request')}
+          >
+            <Text style={[styles.orderButtonText, { color: '#fff' }]}>Tesisatçı Çağır</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity 
           style={styles.logoutButton}
           onPress={handleLogout}

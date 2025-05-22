@@ -8,6 +8,7 @@ import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
 import categoryRoutes from './routes/categoryRoutes';
 import commentRoutes from './routes/commentRoutes';
+import plumberRequestRoutes from './routes/plumberRequestRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 const prisma = new PrismaClient();
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/plumber-requests', plumberRequestRoutes);
 
 // Ana sayfa route'u
 app.get('/', (req, res) => {
