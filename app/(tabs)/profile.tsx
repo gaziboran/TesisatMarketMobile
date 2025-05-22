@@ -2,78 +2,46 @@ import { StyleSheet, View, Text, TouchableOpacity, TextInput, Image, KeyboardAvo
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../context/AuthContext';
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
-  phone: string;
-  fullName: string;
-  address: string;
+  fullName?: string;
+  phone?: string;
+  address?: string;
 }
 
 export default function ProfileScreen() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, login, logout } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
   const [newAddress, setNewAddress] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  const checkUser = async () => {
-    try {
-      const userData = await AsyncStorage.getItem('user');
-      if (userData) {
-        setUser(JSON.parse(userData));
-      }
-    } catch (error) {
-      console.error('Kullanıcı bilgisi alınamadı:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleLogin = async () => {
     if (!email || !password) {
       alert('Lütfen tüm alanları doldurun!');
       return;
     }
+    setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email, password })
-      });
-      const data = await response.json();
-      if (data.token && data.user) {
-        await AsyncStorage.setItem('user', JSON.stringify(data.user));
-        await AsyncStorage.setItem('token', data.token);
-        setUser(data.user);
-        alert(`Hoşgeldiniz ${data.user.fullName}`);
-        router.push('/');
-      } else {
-        alert(data.message || 'Hatalı bilgi!');
-      }
+      await login(email, password);
+      alert('Hoşgeldiniz!');
+      router.push('/');
     } catch (err) {
-      alert('Sunucuya ulaşılamıyor!');
+      alert('Giriş başarısız!');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('token');
-      setUser(null);
-      router.push('/');
-    } catch (error) {
-      console.error('Çıkış yapılırken hata oluştu:', error);
-    }
+    await logout();
+    router.push('/');
   };
 
   const handleUpdateAddress = async () => {
@@ -191,7 +159,7 @@ export default function ProfileScreen() {
       <View style={styles.profileContent}>
         <View style={styles.profileHeader}>
           <Ionicons name="person-circle-outline" size={80} color="#FF6B00" />
-          <Text style={styles.userName}>{user.fullName}</Text>
+          <Text style={styles.userName}>{user.fullName || user.username}</Text>
           <Text style={styles.userEmail}>{user.email}</Text>
         </View>
 
@@ -199,11 +167,11 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Kişisel Bilgiler</Text>
           <View style={styles.infoItem}>
             <Ionicons name="call-outline" size={24} color="#FF6B00" />
-            <Text style={styles.infoText}>{user.phone}</Text>
-              </View>
+            <Text style={styles.infoText}>{user.phone || '-'}</Text>
+          </View>
           <View style={styles.infoItem}>
             <Ionicons name="location-outline" size={24} color="#FF6B00" />
-            <Text style={styles.infoText}>{user.address || 'Adres bilgisi girilmemiş'}</Text>
+            <Text style={styles.infoText}>{user.address || '-'}</Text>
             <TouchableOpacity 
               style={styles.editButton}
               onPress={() => {
