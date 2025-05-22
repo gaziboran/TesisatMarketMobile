@@ -12,6 +12,8 @@ export interface PlumberRequest {
   createdAt: Date;
   updatedAt: Date;
   image?: string;
+  rating?: number;
+  comment?: string;
 }
 
 export const createPlumberRequest = async (data: Omit<PlumberRequest, 'id' | 'createdAt' | 'updatedAt'> & { image?: string }) => {
@@ -36,6 +38,17 @@ export const updatePlumberRequestStatus = async (id: string, status: PlumberRequ
     where: { id },
     data: {
       status,
+      updatedAt: new Date(),
+    },
+  });
+};
+
+export const updatePlumberRequestRatingAndComment = async (id: string, rating?: number, comment?: string) => {
+  return prisma.plumberRequest.update({
+    where: { id },
+    data: {
+      ...(rating !== undefined && { rating }),
+      ...(comment !== undefined && { comment }),
       updatedAt: new Date(),
     },
   });

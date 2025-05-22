@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createPlumberRequest, getPlumberRequestsByUserId, updatePlumberRequestStatus } from '../models/PlumberRequest';
+import { createPlumberRequest, getPlumberRequestsByUserId, updatePlumberRequestStatus, updatePlumberRequestRatingAndComment } from '../models/PlumberRequest';
 import path from 'path';
 
 export const createRequest = async (req: Request, res: Response) => {
@@ -54,6 +54,21 @@ export const updateRequestStatus = async (req: Request, res: Response) => {
     res.json(request);
   } catch (error) {
     console.error('Tesisatçı talebi güncelleme hatası:', error);
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+};
+
+export const updateRequestRatingAndComment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+    if (rating === undefined && comment === undefined) {
+      return res.status(400).json({ message: 'Puan veya yorum zorunlu' });
+    }
+    const request = await updatePlumberRequestRatingAndComment(id, rating, comment);
+    res.json(request);
+  } catch (error) {
+    console.error('Tesisatçı talebi puan/yorum güncelleme hatası:', error);
     res.status(500).json({ message: 'Sunucu hatası' });
   }
 }; 

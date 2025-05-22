@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const API_URL = 'http://localhost:3001/api';
+
 export default function PlumberRequestScreen() {
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
@@ -12,6 +14,10 @@ export default function PlumberRequestScreen() {
   const [token, setToken] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<any>(null);
   const [success, setSuccess] = useState(false);
+  const [requests, setRequests] = useState<Array<{ id: number; status: string; createdAt: string; address: string; problemDescription: string }>>([]);
+  const [ratings, setRatings] = useState<Record<number, number>>({});
+  const [comments, setComments] = useState<Record<number, string>>({});
+  const [submitSuccess, setSubmitSuccess] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -30,6 +36,30 @@ export default function PlumberRequestScreen() {
     };
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    if (token) {
+      fetchRequests();
+    }
+  }, [token]);
+
+  const fetchRequests = async () => {
+    try {
+      const response = await fetch(`${API_URL}/plumber-requests/user/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setRequests(data);
+      } else {
+        throw new Error(data.message || 'Bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Talepler yüklenirken hata:', error);
+    }
+  };
 
   const handlePickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -68,6 +98,37 @@ export default function PlumberRequestScreen() {
       }
     } catch (error) {
       Alert.alert('Hata', 'Tesisatçı talebi oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+    }
+  };
+
+  const handleRate = (requestId: number, rating: number) => {
+    setRatings({ ...ratings, [requestId]: rating });
+  };
+
+  const handleComment = (requestId: number, comment: string) => {
+    setComments({ ...comments, [requestId]: comment });
+  };
+
+  const handleSubmitRatingAndComment = async (requestId: number) => {
+    try {
+      const response = await fetch(`${API_URL}/plumber-requests/${requestId}/rating-comment`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          rating: ratings[requestId],
+          comment: comments[requestId],
+        }),
+      });
+      if (response.ok) {
+        setSubmitSuccess((prev) => ({ ...prev, [requestId]: true }));
+      } else {
+        throw new Error('Gönderilemedi');
+      }
+    } catch (error) {
+      alert('Puan ve yorum gönderilirken hata oluştu.');
     }
   };
 
@@ -141,6 +202,68 @@ export default function PlumberRequestScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      <View style={styles.requestsList}>
+        <Text style={{fontSize:24,fontWeight:'bold',marginBottom:24,color:'#2c3e50'}}>Geçmiş Talepler</Text>
+        {requests.map((request) => (
+          <View key={request.id} style={styles.requestItem}>
+            <View style={styles.requestHeader}>
+              <Text style={{fontSize:18,fontWeight:'bold',color:'#2c3e50'}}>Talep #{request.id}</Text>
+              <Text style={{fontSize:16,color:'#7f8c8d'}}>Durum: {request.status}</Text>
+            </View>
+            <Text style={{fontSize:14,color:'#7f8c8d',marginTop:8}}>Tarih: {new Date(request.createdAt).toLocaleDateString()}</Text>
+            <Text style={{fontSize:16,color:'#2c3e50',marginTop:8}}>Adres: {request.address}</Text>
+            <Text style={{fontSize:16,color:'#2c3e50',marginTop:8}}>Tesisat Sorunu: {request.problemDescription}</Text>
+            <View style={styles.ratingContainer}>
+              <Text style={{fontSize:16,fontWeight:'bold',color:'#2c3e50'}}>Puan: {ratings[request.id] || 'Henüz puanlanmadı'}</Text>
+              <View style={styles.ratingButtons}>
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <TouchableOpacity
+                    key={rating}
+                    onPress={() => handleRate(request.id, rating)}
+                    style={[
+                      styles.starBox,
+                      ratings[request.id] === rating && styles.starBoxSelected,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.ratingButton,
+                        { color: rating <= (ratings[request.id] || 0) ? '#FFD700' : '#e0e0e0' },
+                      ]}
+                    >
+                      ★
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            <View style={styles.commentContainer}>
+              <Text style={{fontSize:16,fontWeight:'bold',color:'#2c3e50'}}>Yorum:</Text>
+              <TextInput
+                style={styles.commentInput}
+                value={comments[request.id] || ''}
+                onChangeText={(text) => handleComment(request.id, text)}
+                placeholder="Tesisatçı hakkında yorumunuzu yazın..."
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+            {submitSuccess[request.id] ? (
+              <View style={styles.successBox}>
+                <Text style={{color:'#27ae60',fontWeight:'bold',fontSize:16}}>Puan ve yorum başarıyla gönderildi!</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={() => handleSubmitRatingAndComment(request.id)}
+              >
+                <Text style={styles.sendButtonText}>Gönder</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+      </View>
     </ScrollView>
   );
 }
@@ -148,7 +271,7 @@ export default function PlumberRequestScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
   header: {
     flexDirection: 'row',
@@ -200,5 +323,98 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  requestsList: {
+    padding: 24,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    marginTop: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  requestItem: {
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  requestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  ratingButtons: {
+    flexDirection: 'row',
+    marginLeft: 12,
+    gap: 8,
+  },
+  ratingButton: {
+    fontSize: 28,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  starBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  starBoxSelected: {
+    borderColor: '#FFD700',
+    backgroundColor: '#fffbe6',
+  },
+  commentContainer: {
+    marginTop: 12,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+    marginTop: 8,
+  },
+  sendButton: {
+    backgroundColor: '#FF6B00',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  sendButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  successBox: {
+    backgroundColor: '#eafbe7',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 12,
   },
 }); 

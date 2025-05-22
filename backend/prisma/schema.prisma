@@ -108,6 +108,8 @@ model PlumberRequest {
   updatedAt           DateTime @updatedAt
   user                User     @relation(fields: [userId], references: [id])
   image               String?
+  rating              Int?
+  comment             String?
 
   @@map("plumber_requests")
 } 
