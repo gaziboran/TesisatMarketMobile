@@ -109,7 +109,7 @@ export const getUserOrders = async (req: AuthRequest, res: Response) => {
         console.error('Sipariş getirme hatası:', error);
         res.status(500).json({ error: 'Siparişler getirilirken bir hata oluştu' });
     }
-};
+}; 
 
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {

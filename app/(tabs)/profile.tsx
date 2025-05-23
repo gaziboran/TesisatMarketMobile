@@ -32,7 +32,7 @@ export default function ProfileScreen() {
     try {
       await login(email, password);
       alert('Hoşgeldiniz!');
-      router.push('/');
+        router.push('/');
     } catch (err) {
       alert('Giriş başarısız!');
     } finally {
@@ -42,7 +42,7 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.push('/');
+      router.push('/');
   };
 
   const handleUpdateAddress = async () => {
@@ -175,7 +175,7 @@ export default function ProfileScreen() {
           <View style={styles.infoItem}>
             <Ionicons name="call-outline" size={24} color="#FF6B00" />
             <Text style={styles.infoText}>{user.phone || '-'}</Text>
-          </View>
+              </View>
           <View style={styles.infoItem}>
             <Ionicons name="location-outline" size={24} color="#FF6B00" />
             <Text style={styles.infoText}>{user.address || '-'}</Text>

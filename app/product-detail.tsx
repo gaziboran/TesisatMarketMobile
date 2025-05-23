@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCart } from './contexts/CartContext';
 import { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
-import api from './services/api';
+import api, { addToCart as addToCartApi } from './services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Review {
@@ -93,30 +93,27 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const handleAddToCart = () => {
-    addToCart({
-      id: id as string,
-      name: name as string,
-      price: price as string,
-      image: image as string,
-      category: category as string,
-    });
-
-    Alert.alert(
-      "Başarılı!",
-      "Ürün sepetinize eklendi.",
-      [
-        {
-          text: "Alışverişe Devam Et",
-          onPress: () => router.back(),
-          style: "cancel"
-        },
-        { 
-          text: "Sepete Git", 
-          onPress: () => router.push("/cart")
-        }
-      ]
-    );
+  const handleAddToCart = async () => {
+    try {
+      await addToCartApi(Number(id), 1);
+      Alert.alert(
+        "Başarılı!",
+        "Ürün sepetinize eklendi.",
+        [
+          {
+            text: "Alışverişe Devam Et",
+            onPress: () => router.back(),
+            style: "cancel"
+          },
+          { 
+            text: "Sepete Git", 
+            onPress: () => router.push("/cart")
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert("Hata", "Ürün sepete eklenemedi.");
+    }
   };
 
   const renderStars = (rating: number) => {
@@ -315,7 +312,7 @@ export default function ProductDetailScreen() {
             {comments.filter(c => !c.comment.startsWith('[ADMIN]')).length === 0 && (
               <Text style={styles.noComments}>Henüz yorum yapılmamış</Text>
             )}
-          </View>
+            </View>
         </View>
 
         {/* Sepete Ekle Butonu */}
