@@ -57,7 +57,7 @@ export default function RegisterScreen() {
           await AsyncStorage.setItem('user', JSON.stringify(loginData.user));
           await AsyncStorage.setItem('token', loginData.token);
           alert(`Hoşgeldiniz ${loginData.user.fullName}`);
-          router.push('/');
+          router.replace('/profile');
         } else {
           alert('Kayıt başarılı! Lütfen giriş yapın.');
           router.push('/profile');
