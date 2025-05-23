@@ -167,22 +167,7 @@ export default function ProductDetailScreen() {
   };
 
   const handleLogin = () => {
-    Alert.alert(
-      "Giriş Gerekli",
-      "Yorum yapabilmek için giriş yapmalısınız.",
-      [
-        {
-          text: "İptal",
-          style: "cancel"
-        },
-        {
-          text: "Giriş Yap",
-          onPress: () => {
-            router.back();
-          }
-        }
-      ]
-    );
+    router.push('/profile');
   };
 
   if (loading || authLoading) {
@@ -212,6 +197,22 @@ export default function ProductDetailScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Ürün Açıklaması</Text>
           <Text style={styles.description}>{description}</Text>
+        </View>
+
+        {/* İletişim Kutusu */}
+        <View style={{
+          backgroundColor: '#e3f2fd',
+          borderRadius: 8,
+          padding: 10,
+          marginTop: 16,
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+        }}>
+          <View style={{flexDirection:'row',alignItems:'center',marginBottom:2}}>
+            <Ionicons name="call-outline" size={20} color="#2980b9" style={{marginRight: 8}} />
+            <Text style={{color: '#1565c0', fontWeight: 'bold', fontSize:16}}>İletişim: 05523348343</Text>
+          </View>
+          <Text style={{color:'#1565c0',fontWeight:'bold',fontSize:15,marginLeft:28}}>Sahibi: MEHMET REŞAT BORAN</Text>
         </View>
 
         <View style={styles.section}>
