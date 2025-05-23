@@ -55,4 +55,44 @@ export const addComment = async (req: Request, res: Response) => {
   } catch (err) {
     res.status(500).json({ error: 'Yorum eklenemedi' });
   }
+};
+
+export const getAllComments = async (req: Request, res: Response) => {
+  try {
+    const comments = await prisma.comment.findMany({
+      include: {
+        user: true,
+        product: true
+      },
+      orderBy: { timestamp: 'desc' }
+    });
+    res.json(comments);
+  } catch (err) {
+    res.status(500).json({ error: 'Tüm yorumlar alınamadı' });
+  }
+};
+
+export const deleteComment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await prisma.comment.delete({ where: { id: Number(id) } });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Yorum silinemedi' });
+  }
+};
+
+export const updateComment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { comment } = req.body;
+    if (!comment) return res.status(400).json({ error: 'Yorum metni gerekli' });
+    const updated = await prisma.comment.update({
+      where: { id: Number(id) },
+      data: { comment }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Yorum güncellenemedi' });
+  }
 }; 

@@ -6,6 +6,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'http://localhost:3001/api';
 
+const statusMap: Record<string, { label: string; color: string }> = {
+  pending: { label: 'Beklemede', color: '#888' },
+  accepted: { label: 'Yönlendirildi', color: '#2980b9' },
+  completed: { label: 'Halloldu', color: '#27ae60' },
+  cancelled: { label: 'İptal', color: '#e74c3c' },
+};
+
 export default function PlumberRequestScreen() {
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
@@ -42,6 +49,20 @@ export default function PlumberRequestScreen() {
       fetchRequests();
     }
   }, [token]);
+
+  useEffect(() => {
+    // Yorum ve puanları ilk yüklemede doldur
+    if (requests.length > 0) {
+      const initialRatings: Record<number, number> = {};
+      const initialComments: Record<number, string> = {};
+      requests.forEach((req: any) => {
+        if (req.rating) initialRatings[req.id] = req.rating;
+        if (req.comment) initialComments[req.id] = req.comment;
+      });
+      setRatings(initialRatings);
+      setComments(initialComments);
+    }
+  }, [requests]);
 
   const fetchRequests = async () => {
     try {
@@ -124,6 +145,9 @@ export default function PlumberRequestScreen() {
       });
       if (response.ok) {
         setSubmitSuccess((prev) => ({ ...prev, [requestId]: true }));
+        // Yorum ve puan güncellendiğinde state'i de güncelle
+        setRatings((prev) => ({ ...prev, [requestId]: ratings[requestId] }));
+        setComments((prev) => ({ ...prev, [requestId]: comments[requestId] }));
       } else {
         throw new Error('Gönderilemedi');
       }
@@ -209,57 +233,53 @@ export default function PlumberRequestScreen() {
           <View key={request.id} style={styles.requestItem}>
             <View style={styles.requestHeader}>
               <Text style={{fontSize:18,fontWeight:'bold',color:'#2c3e50'}}>Talep #{request.id}</Text>
-              <Text style={{fontSize:16,color:'#7f8c8d'}}>Durum: {request.status}</Text>
+              <Text style={{fontSize:16, color: statusMap[request.status]?.color || '#7f8c8d'}}>
+                Durum: {statusMap[request.status]?.label || request.status}
+              </Text>
             </View>
             <Text style={{fontSize:14,color:'#7f8c8d',marginTop:8}}>Tarih: {new Date(request.createdAt).toLocaleDateString()}</Text>
             <Text style={{fontSize:16,color:'#2c3e50',marginTop:8}}>Adres: {request.address}</Text>
             <Text style={{fontSize:16,color:'#2c3e50',marginTop:8}}>Tesisat Sorunu: {request.problemDescription}</Text>
-            <View style={styles.ratingContainer}>
-              <Text style={{fontSize:16,fontWeight:'bold',color:'#2c3e50'}}>Puan: {ratings[request.id] || 'Henüz puanlanmadı'}</Text>
-              <View style={styles.ratingButtons}>
-                {[1, 2, 3, 4, 5].map((rating) => (
+            {request.status === 'completed' ? (
+              <>
+                <View style={styles.ratingContainer}>
+                  <Text style={{fontSize:16,fontWeight:'bold',color:'#2c3e50'}}>Puan: {ratings[request.id] || 'Henüz puanlanmadı'}</Text>
+                  <View style={styles.ratingButtons}>
+                    {[1, 2, 3, 4, 5].map((rating) => (
+                      <TouchableOpacity key={rating} onPress={() => handleRate(request.id, rating)}>
+                        <Text style={[styles.ratingButton, { color: rating <= (ratings[request.id] || 0) ? '#FFD700' : '#e0e0e0' }]}>
+                          ★
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                <View style={styles.commentContainer}>
+                  <Text style={{fontSize:16,fontWeight:'bold',color:'#2c3e50'}}>Yorum:</Text>
+                  <TextInput
+                    style={styles.commentInput}
+                    value={comments[request.id] || ''}
+                    onChangeText={(text) => handleComment(request.id, text)}
+                    placeholder="Tesisatçı hakkında yorumunuzu yazın..."
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+                {submitSuccess[request.id] ? (
+                  <View style={styles.successBox}>
+                    <Text style={{color:'#27ae60',fontWeight:'bold',fontSize:16}}>Puan ve yorum başarıyla gönderildi!</Text>
+                  </View>
+                ) : (
                   <TouchableOpacity
-                    key={rating}
-                    onPress={() => handleRate(request.id, rating)}
-                    style={[
-                      styles.starBox,
-                      ratings[request.id] === rating && styles.starBoxSelected,
-                    ]}
+                    style={styles.sendButton}
+                    onPress={() => handleSubmitRatingAndComment(request.id)}
                   >
-                    <Text
-                      style={[
-                        styles.ratingButton,
-                        { color: rating <= (ratings[request.id] || 0) ? '#FFD700' : '#e0e0e0' },
-                      ]}
-                    >
-                      ★
-                    </Text>
+                    <Text style={styles.sendButtonText}>Gönder</Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-            <View style={styles.commentContainer}>
-              <Text style={{fontSize:16,fontWeight:'bold',color:'#2c3e50'}}>Yorum:</Text>
-              <TextInput
-                style={styles.commentInput}
-                value={comments[request.id] || ''}
-                onChangeText={(text) => handleComment(request.id, text)}
-                placeholder="Tesisatçı hakkında yorumunuzu yazın..."
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-            {submitSuccess[request.id] ? (
-              <View style={styles.successBox}>
-                <Text style={{color:'#27ae60',fontWeight:'bold',fontSize:16}}>Puan ve yorum başarıyla gönderildi!</Text>
-              </View>
+                )}
+              </>
             ) : (
-              <TouchableOpacity
-                style={styles.sendButton}
-                onPress={() => handleSubmitRatingAndComment(request.id)}
-              >
-                <Text style={styles.sendButtonText}>Gönder</Text>
-              </TouchableOpacity>
+              <Text style={{marginTop:12,color:'#888'}}>Yorum ve puan verebilmek için talebin tamamlanmasını bekleyin.</Text>
             )}
           </View>
         ))}
@@ -365,25 +385,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     textAlign: 'center',
     fontWeight: 'bold',
-  },
-  starBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  starBoxSelected: {
-    borderColor: '#FFD700',
-    backgroundColor: '#fffbe6',
   },
   commentContainer: {
     marginTop: 12,

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createPlumberRequest, getPlumberRequestsByUserId, updatePlumberRequestStatus, updatePlumberRequestRatingAndComment } from '../models/PlumberRequest';
+import { createPlumberRequest, getPlumberRequestsByUserId, updatePlumberRequestStatus, updatePlumberRequestRatingAndComment, getAllPlumberRequests } from '../models/PlumberRequest';
 import path from 'path';
 
 export const createRequest = async (req: Request, res: Response) => {
@@ -69,6 +69,16 @@ export const updateRequestRatingAndComment = async (req: Request, res: Response)
     res.json(request);
   } catch (error) {
     console.error('Tesisatçı talebi puan/yorum güncelleme hatası:', error);
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+};
+
+export const getAllRequests = async (req: Request, res: Response) => {
+  try {
+    const requests = await getAllPlumberRequests();
+    res.json(requests);
+  } catch (error) {
+    console.error('Tüm tesisatçı talepleri getirme hatası:', error);
     res.status(500).json({ message: 'Sunucu hatası' });
   }
 }; 

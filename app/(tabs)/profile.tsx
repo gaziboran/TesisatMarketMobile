@@ -11,6 +11,7 @@ interface User {
   fullName?: string;
   phone?: string;
   address?: string;
+  roleId: number;
 }
 
 export default function ProfileScreen() {
@@ -86,6 +87,12 @@ export default function ProfileScreen() {
       alert('Adres güncellenemedi, lütfen tekrar deneyin');
     }
   };
+
+  useEffect(() => {
+    if (user && user.roleId === 0) {
+      router.replace('/admin');
+    }
+  }, [user]);
 
   if (isLoading) {
   return (

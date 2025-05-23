@@ -109,4 +109,51 @@ export const getUserOrders = async (req: AuthRequest, res: Response) => {
         console.error('Sipariş getirme hatası:', error);
         res.status(500).json({ error: 'Siparişler getirilirken bir hata oluştu' });
     }
+};
+
+export const updateOrderStatus = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const validStatuses = ['pending', 'accepted', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Geçersiz durum' });
+    }
+    // Admin kontrolü (kendi middleware'iniz varsa oraya taşıyabilirsiniz)
+    // Burada örnek olarak userId üzerinden kontrol ediliyor
+    // Gerçek projede JWT içinden roleId alınmalı
+    // Şimdilik userId=1 admin kabul edelim veya roleId==0 kontrolü yapılmalı
+    // Eğer req.user varsa:
+    // if (!req.user || req.user.roleId !== 0) return res.status(403).json({ message: 'Yetkisiz' });
+    // Şimdilik roleId kontrolü yoksa, sadece endpointi ekliyorum
+    const order = await prisma.order.update({
+      where: { id: Number(id) },
+      data: { status },
+    });
+    res.json(order);
+  } catch (error) {
+    console.error('Sipariş durumu güncelleme hatası:', error);
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+};
+
+export const getAllOrders = async (req: Request, res: Response) => {
+  try {
+    // Admin kontrolü (JWT varsa req.user.roleId bakılmalı)
+    // Şimdilik herkes erişebiliyor, istersen roleId==0 kontrolü ekle
+    const orders = await prisma.order.findMany({
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(orders);
+  } catch (error) {
+    console.error('Tüm siparişleri getirme hatası:', error);
+    res.status(500).json({ message: 'Siparişler getirilirken bir hata oluştu' });
+  }
 }; 

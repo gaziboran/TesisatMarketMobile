@@ -95,6 +95,9 @@ model Comment {
 
   user      User     @relation(fields: [userId], references: [id])
   product   Product  @relation(fields: [productId], references: [id])
+  parentId  Int?     // Cevap ise ana yorumun id'si
+  parent    Comment? @relation("CommentToReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentToReplies")
 }
 
 model PlumberRequest {

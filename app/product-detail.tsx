@@ -291,21 +291,31 @@ export default function ProductDetailScreen() {
           )}
 
           <View style={styles.commentsList}>
-            {comments.map((comment) => (
-              <View key={comment.id} style={styles.commentItem}>
-                <View style={styles.commentHeader}>
-                  <Text style={styles.commentUserHighlight}>{comment.userName}</Text>
-                  <Text style={styles.commentDate}>
-                    {new Date(comment.timestamp).toLocaleDateString('tr-TR')}
-                  </Text>
+            {comments.filter(c => !c.comment.startsWith('[ADMIN]')).map((comment) => {
+              // Admin cevabı var mı kontrolü
+              const adminReply = comments.find(r => r.productId === comment.productId && r.comment.startsWith('[ADMIN]') && r.timestamp > comment.timestamp);
+              return (
+                <View key={comment.id} style={{backgroundColor:'#f8f9fa',padding:15,borderRadius:10,marginBottom:18,shadowColor:'#ff9800',shadowOpacity:adminReply?0.15:0,shadowRadius:adminReply?6:0,borderWidth:adminReply?1:0,borderColor:adminReply?'#ff9800':'#f8f9fa'}}>
+                  <View style={styles.commentHeader}>
+                    <Text style={styles.commentUserHighlight}>{comment.userName}</Text>
+                    <Text style={styles.commentDate}>{new Date(comment.timestamp).toLocaleDateString('tr-TR')}</Text>
+                  </View>
+                  <Text style={styles.commentText}>{comment.comment}</Text>
+                  {/* Admin cevabı kutusu */}
+                  {adminReply && (
+                    <View style={{backgroundColor:'#fff3e0',borderColor:'#ff9800',borderWidth:1,marginTop:14,padding:10,borderRadius:8,marginLeft:8}}>
+                      <Text style={{fontWeight:'bold',color:'#e67e22',marginBottom:2}}>Admin Cevabı</Text>
+                      <Text style={{fontSize:14,color:'#b26a00'}}>{adminReply.comment.replace('[ADMIN]','').trim()}</Text>
+                      <Text style={{fontSize:11,color:'#b26a00',marginTop:2}}>{new Date(adminReply.timestamp).toLocaleDateString('tr-TR')}</Text>
+                    </View>
+                  )}
                 </View>
-                <Text style={styles.commentText}>{comment.comment}</Text>
-              </View>
-            ))}
-            {comments.length === 0 && (
+              );
+            })}
+            {comments.filter(c => !c.comment.startsWith('[ADMIN]')).length === 0 && (
               <Text style={styles.noComments}>Henüz yorum yapılmamış</Text>
             )}
-            </View>
+          </View>
         </View>
 
         {/* Sepete Ekle Butonu */}

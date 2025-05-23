@@ -52,4 +52,10 @@ export const updatePlumberRequestRatingAndComment = async (id: string, rating?: 
       updatedAt: new Date(),
     },
   });
+};
+
+export const getAllPlumberRequests = async () => {
+  return prisma.plumberRequest.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
 }; 

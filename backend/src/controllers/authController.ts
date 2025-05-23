@@ -144,6 +144,7 @@ export const loginUser = async (req: Request, res: Response) => {
                 email: user.email,
                 fullName: user.fullName,
                 address: user.address,
+                roleId: user.roleId,
                 carts: user.carts.map(cart => ({
                     id: cart.id,
                     userId: cart.userId,
@@ -232,5 +233,25 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Şifre değiştirme hatası:', error);
         res.status(500).json({ message: 'Sunucu hatası' });
+    }
+};
+
+export const getAllUsers = async (req: Request, res: Response) => {
+    try {
+        const users = await prisma.user.findMany({
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                phone: true,
+                fullName: true,
+                address: true,
+                roleId: true
+            }
+        });
+        res.json(users);
+    } catch (error) {
+        console.error('Kullanıcılar alınırken hata:', error);
+        res.status(500).json({ message: 'Kullanıcılar alınırken bir hata oluştu' });
     }
 }; 
