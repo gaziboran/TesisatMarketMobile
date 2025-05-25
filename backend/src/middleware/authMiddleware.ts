@@ -35,7 +35,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
         console.error('Token doğrulama hatası:', error);
         return res.status(401).json({ message: 'Geçersiz token' });
     }
-};
+}; 
 
 export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from './context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView as RNScrollView } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 const API_URL = 'http://localhost:3001/api';
 
@@ -356,6 +357,12 @@ export default function AdminPanel() {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={{flexDirection:'row',alignItems:'center',marginBottom:16}}>
+        <TouchableOpacity onPress={() => router.replace('/(tabs)')}> 
+          <Ionicons name="arrow-back" size={24} color="#2c3e50" style={{marginRight:8}} />
+        </TouchableOpacity>
+        <Text style={{fontWeight:'bold',fontSize:18}}>admin</Text>
+      </View>
       <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
         <Text style={styles.title}>Admin Paneli</Text>
         <TouchableOpacity style={styles.logoutButton} onPress={async () => { await logout(); router.replace('/(tabs)'); }}>

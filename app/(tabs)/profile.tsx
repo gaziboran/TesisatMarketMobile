@@ -88,12 +88,6 @@ export default function ProfileScreen() {
     }
   };
 
-  useEffect(() => {
-    if (user && user.roleId === 0) {
-      router.replace('/admin');
-    }
-  }, [user]);
-
   if (isLoading) {
   return (
     <View style={styles.container}>
@@ -169,6 +163,22 @@ export default function ProfileScreen() {
           <Text style={styles.userName}>{user.fullName || user.username}</Text>
           <Text style={styles.userEmail}>{user.email}</Text>
         </View>
+
+        {user && user.roleId === 0 && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#FF6B00',
+              padding: 12,
+              borderRadius: 8,
+              alignItems: 'center',
+              marginBottom: 16,
+              marginTop: 8
+            }}
+            onPress={() => router.push('/admin')}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Admin Paneli</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.infoSection}>
           <Text style={styles.sectionTitle}>Kişisel Bilgiler</Text>
