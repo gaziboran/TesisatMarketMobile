@@ -3,26 +3,27 @@ import { prisma } from '../db';
 
 // GET /comments?productId=xx
 export const getComments = async (req: Request, res: Response) => {
-  const { productId } = req.query;
+  const { productId, userId } = req.query;
   if (!productId) {
     return res.status(400).json({ error: 'productId gerekli' });
   }
   try {
+    // Tüm yorumları çek
     const comments = await prisma.comment.findMany({
       where: { productId: Number(productId) },
-      include: { user: true },
       orderBy: { timestamp: 'desc' }
     });
-    // userName ekle
-    const result = comments.map((c: any) => ({
-      id: c.id,
-      userId: c.userId,
-      productId: c.productId,
-      comment: c.comment,
-      timestamp: c.timestamp,
-      userName: c.user?.username || ''
-    }));
-    res.json(result);
+    // adminReply sadece ilgili kullanıcıya gösterilsin
+    const filtered = comments.map((c: any) => {
+      if (c.adminReply) {
+        // userId query paramı yoksa veya userId eşleşmiyorsa adminReply'ı gizle
+        if (!userId || c.userId !== Number(userId)) {
+          return { ...c, adminReply: null };
+        }
+      }
+      return c;
+    });
+    res.json(filtered);
   } catch (err) {
     res.status(500).json({ error: 'Yorumlar alınamadı' });
   }
@@ -30,18 +31,18 @@ export const getComments = async (req: Request, res: Response) => {
 
 // POST /comments
 export const addComment = async (req: Request, res: Response) => {
-  const { userId, productId, comment, timestamp } = req.body;
+  const { userId, productId, comment } = req.body;
   if (!userId || !productId || !comment) {
     return res.status(400).json({ error: 'Eksik veri' });
   }
   try {
+    const data: any = {
+      userId: Number(userId),
+      productId: Number(productId),
+      comment
+    };
     const newComment = await prisma.comment.create({
-      data: {
-        userId: Number(userId),
-        productId: Number(productId),
-        comment,
-        timestamp: timestamp ? new Date(timestamp) : new Date()
-      },
+      data,
       include: { user: true }
     });
     res.json({
@@ -50,7 +51,7 @@ export const addComment = async (req: Request, res: Response) => {
       productId: newComment.productId,
       comment: newComment.comment,
       timestamp: newComment.timestamp,
-      userName: newComment.user?.username || ''
+      adminReply: newComment.adminReply || null
     });
   } catch (err) {
     res.status(500).json({ error: 'Yorum eklenemedi' });
@@ -94,5 +95,24 @@ export const updateComment = async (req: Request, res: Response) => {
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Yorum güncellenemedi' });
+  }
+};
+
+// Adminin sadece adminReply eklemesi için yeni fonksiyon
+// PATCH /comments/:id/admin-reply
+export const addAdminReply = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { adminReply } = req.body;
+  if (!adminReply) {
+    return res.status(400).json({ error: 'adminReply gerekli' });
+  }
+  try {
+    const updated = await prisma.comment.update({
+      where: { id: Number(id) },
+      data: { adminReply }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Admin cevabı eklenemedi' });
   }
 }; 

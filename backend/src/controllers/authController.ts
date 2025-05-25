@@ -51,14 +51,11 @@ export const registerUser = async (req: Request, res: Response) => {
             }
         }
 
-        // Şifreyi hashle
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Yeni kullanıcı oluştur
+        // Yeni kullanıcı oluştur (şifre hash'lemeden)
         const user = await prisma.user.create({
             data: {
                 username,
-                password: hashedPassword,
+                password, // Direkt şifreyi kaydet
                 phone,
                 email,
                 fullName,
@@ -77,8 +74,7 @@ export const registerUser = async (req: Request, res: Response) => {
         );
 
         res.status(201).json({
-            success: true,
-            message: 'Kullanıcı başarıyla oluşturuldu',
+            message: 'Kayıt başarılı',
             token,
             user: {
                 id: user.id,
@@ -86,16 +82,13 @@ export const registerUser = async (req: Request, res: Response) => {
                 phone: user.phone,
                 email: user.email,
                 fullName: user.fullName,
-                address: user.address
+                address: user.address,
+                roleId: user.roleId
             }
         });
     } catch (error) {
         console.error('Kayıt hatası:', error);
-        res.status(500).json({ 
-            success: false,
-            message: 'Sunucu hatası',
-            error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-        });
+        res.status(500).json({ message: 'Sunucu hatası' });
     }
 };
 
@@ -120,10 +113,8 @@ export const loginUser = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Geçersiz kullanıcı adı/email veya şifre' });
         }
 
-        // Şifreyi kontrol et
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-
-        if (!isPasswordValid) {
+        // Şifreyi direkt karşılaştır
+        if (password !== user.password) {
             return res.status(401).json({ message: 'Geçersiz kullanıcı adı/email veya şifre' });
         }
 

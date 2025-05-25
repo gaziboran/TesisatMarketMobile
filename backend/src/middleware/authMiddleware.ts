@@ -35,4 +35,15 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
         console.error('Token doğrulama hatası:', error);
         return res.status(401).json({ message: 'Geçersiz token' });
     }
+};
+
+export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Yetkisiz' });
+    }
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    if (!user || user.roleId !== 2) {
+        return res.status(403).json({ message: 'Sadece admin erişebilir' });
+    }
+    next();
 }; 

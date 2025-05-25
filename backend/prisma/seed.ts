@@ -3,53 +3,47 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Önce ürünleri temizle
+  // Önce ilişkili alt tabloları sil
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.comment.deleteMany();
+  await prisma.cart.deleteMany();
   await prisma.product.deleteMany();
-  // Sonra kategorileri temizle
   await prisma.category.deleteMany();
 
   // Kategorileri ekle
-  const categories = [
-    {
+  const elektrik = await prisma.category.create({
+    data: {
       name: 'Elektrik',
       description: 'Elektrik malzemeleri ve ekipmanları',
       image: '/images/categories/elektrik.jpg',
       icon: '⚡'
-    },
-    {
+    }
+  });
+  const hirdavat = await prisma.category.create({
+    data: {
       name: 'Hırdavat',
       description: 'Hırdavat malzemeleri ve aletleri',
       image: '/images/categories/hirdavat.jpg',
       icon: '🔧'
-    },
-    {
+    }
+  });
+  const isitma = await prisma.category.create({
+    data: {
       name: 'Isıtma',
       description: 'Isıtma sistemleri ve ekipmanları',
       image: '/images/categories/isitma.jpg',
       icon: '🔥'
-    },
-    {
+    }
+  });
+  const suTesisati = await prisma.category.create({
+    data: {
       name: 'Su Tesisatı',
       description: 'Su tesisatı malzemeleri ve ekipmanları',
       image: '/images/categories/su-tesisati.jpg',
       icon: '💧'
     }
-  ];
-
-  // Kategorileri oluştur ve ID'lerini al
-  const createdCategories = await Promise.all(
-    categories.map(category => prisma.category.create({ data: category }))
-  );
-
-  // Kategori ID'lerini al
-  const elektrikId = createdCategories.find(c => c.name === 'Elektrik')?.id;
-  const hirdavatId = createdCategories.find(c => c.name === 'Hırdavat')?.id;
-  const isitmaId = createdCategories.find(c => c.name === 'Isıtma')?.id;
-  const suTesisatiId = createdCategories.find(c => c.name === 'Su Tesisatı')?.id;
-
-  if (!elektrikId || !hirdavatId || !isitmaId || !suTesisatiId) {
-    throw new Error('Kategori ID\'leri bulunamadı');
-  }
+  });
 
   // Ürünleri ekle
   const products = [
@@ -59,7 +53,7 @@ async function main() {
       price: 1299.99,
       stock: 50,
       image: '/images/products/dus-bataryasi.jpg',
-      categoryId: suTesisatiId
+      categoryId: suTesisati.id
     },
     {
       name: 'El Aletleri Seti',
@@ -67,7 +61,7 @@ async function main() {
       price: 2499.99,
       stock: 30,
       image: '/images/products/el-aletleri-seti.jpg',
-      categoryId: hirdavatId
+      categoryId: hirdavat.id
     },
     {
       name: 'Klozet',
@@ -75,7 +69,7 @@ async function main() {
       price: 3499.99,
       stock: 20,
       image: '/images/products/klozet.jpg',
-      categoryId: suTesisatiId
+      categoryId: suTesisati.id
     },
     {
       name: 'Kombi',
@@ -83,7 +77,7 @@ async function main() {
       price: 12999.99,
       stock: 15,
       image: '/images/products/kombi.jpg',
-      categoryId: isitmaId
+      categoryId: isitma.id
     },
     {
       name: 'Lavabo Bataryası',
@@ -91,7 +85,7 @@ async function main() {
       price: 899.99,
       stock: 40,
       image: '/images/products/lavabo-bataryasi.jpg',
-      categoryId: suTesisatiId
+      categoryId: suTesisati.id
     },
     {
       name: 'LED Panel',
@@ -99,7 +93,7 @@ async function main() {
       price: 599.99,
       stock: 25,
       image: '/images/products/led-panel.jpg',
-      categoryId: elektrikId
+      categoryId: elektrik.id
     },
     {
       name: 'Matkap Seti',
@@ -107,7 +101,7 @@ async function main() {
       price: 1999.99,
       stock: 35,
       image: '/images/products/matkap-seti.jpg',
-      categoryId: hirdavatId
+      categoryId: hirdavat.id
     },
     {
       name: 'Merdiven',
@@ -115,7 +109,7 @@ async function main() {
       price: 799.99,
       stock: 20,
       image: '/images/products/merdiven.jpg',
-      categoryId: hirdavatId
+      categoryId: hirdavat.id
     },
     {
       name: 'NYM Kablo',
@@ -123,7 +117,7 @@ async function main() {
       price: 299.99,
       stock: 100,
       image: '/images/products/nym-kablo.jpg',
-      categoryId: elektrikId
+      categoryId: elektrik.id
     },
     {
       name: 'Panel Radyatör',
@@ -131,7 +125,7 @@ async function main() {
       price: 2499.99,
       stock: 25,
       image: '/images/products/panel-radyator.jpg',
-      categoryId: isitmaId
+      categoryId: isitma.id
     },
     {
       name: 'PPR Boru',
@@ -139,7 +133,7 @@ async function main() {
       price: 199.99,
       stock: 200,
       image: '/images/products/ppr-boru.jpg',
-      categoryId: suTesisatiId
+      categoryId: suTesisati.id
     },
     {
       name: 'Priz Kasası',
@@ -147,7 +141,7 @@ async function main() {
       price: 149.99,
       stock: 50,
       image: '/images/products/priz-kasasi.jpg',
-      categoryId: elektrikId
+      categoryId: elektrik.id
     },
     {
       name: 'Termostat',
@@ -155,15 +149,12 @@ async function main() {
       price: 899.99,
       stock: 30,
       image: '/images/products/termostat.jpg',
-      categoryId: isitmaId
+      categoryId: isitma.id
     }
   ];
 
-  // Ürünleri oluştur
   for (const product of products) {
-    await prisma.product.create({
-      data: product
-    });
+    await prisma.product.create({ data: product });
   }
 
   console.log('Kategoriler ve ürünler başarıyla eklendi');

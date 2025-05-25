@@ -96,21 +96,21 @@ export default function ProductDetailScreen() {
   const handleAddToCart = async () => {
     try {
       await addToCartApi(Number(id), 1);
-      Alert.alert(
-        "Başarılı!",
-        "Ürün sepetinize eklendi.",
-        [
-          {
-            text: "Alışverişe Devam Et",
-            onPress: () => router.back(),
-            style: "cancel"
-          },
-          { 
-            text: "Sepete Git", 
-            onPress: () => router.push("/cart")
-          }
-        ]
-      );
+    Alert.alert(
+      "Başarılı!",
+      "Ürün sepetinize eklendi.",
+      [
+        {
+          text: "Alışverişe Devam Et",
+          onPress: () => router.back(),
+          style: "cancel"
+        },
+        { 
+          text: "Sepete Git", 
+          onPress: () => router.push("/cart")
+        }
+      ]
+    );
     } catch (error) {
       Alert.alert("Hata", "Ürün sepete eklenemedi.");
     }
